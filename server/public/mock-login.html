@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mock Duke Login</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px 28px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 320px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #444;
+    }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+    button {
+      margin-top: 18px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      background: #0066cc;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Mock Duke Login</h2>
+    <label for="netid">NetID</label>
+    <input id="netid" type="text" placeholder="e.g. student01" />
+
+    <label for="name">Display Name</label>
+    <input id="name" type="text" placeholder="e.g. Alex Doe" />
+
+    <label for="affiliation">Affiliation</label>
+    <input id="affiliation" type="text" placeholder="student" />
+
+    <button id="loginBtn">Login (Mock)</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const statusBox = document.getElementById("status");
+
+    const performKeyExchange = async (globalPublicKey) => {
+      const aesKey = crypto.getRandomValues(new Uint8Array(32));
+
+      const pemBody = globalPublicKey.replace(/-----(BEGIN|END) PUBLIC KEY-----/g, "").trim();
+      const binaryDer = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+      const rsaKey = await crypto.subtle.importKey(
+        "spki",
+        binaryDer.buffer,
+        { name: "RSA-OAEP", hash: "SHA-256" },
+        false,
+        ["encrypt"]
+      );
+
+      const encAes = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, rsaKey, aesKey);
+      const encAesB64 = btoa(String.fromCharCode(...new Uint8Array(encAes)));
+
+      const resp = await fetch("/api/auth/key-exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ AES_key: encAesB64 })
+      });
+
+      if (!resp.ok) {
+        throw new Error("Key exchange failed");
+      }
+
+      const keyData = await resp.json();
+      const aesCryptoKey = await crypto.subtle.importKey(
+        "raw",
+        aesKey,
+        { name: "AES-GCM" },
+        false,
+        ["decrypt"]
+      );
+
+      const nonce = Uint8Array.from(atob(keyData.nonce), c => c.charCodeAt(0));
+      const ct = Uint8Array.from(atob(keyData.encrypted_data), c => c.charCodeAt(0));
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: nonce, additionalData: new TextEncoder().encode(keyData.client_uuid) },
+        aesCryptoKey,
+        ct
+      );
+
+      const tokenData = JSON.parse(new TextDecoder().decode(decrypted));
+      localStorage.setItem("auth_token", tokenData.auth_token);
+      localStorage.setItem("client_netid", tokenData.client_netid);
+      localStorage.setItem("client_name", tokenData.client_name);
+      localStorage.setItem("client_affiliation", tokenData.client_affiliation);
+    };
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const netid = document.getElementById("netid").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const affiliation = document.getElementById("affiliation").value.trim();
+
+      if (!netid) {
+        statusBox.textContent = "Please enter a NetID.";
+        return;
+      }
+
+      statusBox.textContent = "Starting mock login...";
+
+      try {
+        const initResp = await fetch("/api/auth/mock-init", {
+          method: "GET",
+          headers: {
+            UID: netid,
+            Displayname: name || "Mock User",
+            Affiliation: affiliation || "student"
+          }
+        });
+
+        if (!initResp.ok) {
+          throw new Error("Mock init failed");
+        }
+
+        const { global_public_key } = await initResp.json();
+        statusBox.textContent = "Completing secure login...";
+        await performKeyExchange(global_public_key);
+
+        window.location.href = "/mock/dashboard";
+      } catch (error) {
+        statusBox.textContent = `Login failed: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
