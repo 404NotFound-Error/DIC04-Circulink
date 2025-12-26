@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mock Dashboard</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px 28px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 320px;
+    }
+    .row {
+      margin-top: 8px;
+      color: #334155;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 18px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      background: #e11d48;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Mock Dashboard</h2>
+    <div class="row" id="name"></div>
+    <div class="row" id="netid"></div>
+    <div class="row" id="affiliation"></div>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script>
+    const name = localStorage.getItem("client_name") || "Unknown";
+    const netid = localStorage.getItem("client_netid") || "Unknown";
+    const affiliation = localStorage.getItem("client_affiliation") || "Unknown";
+
+    document.getElementById("name").textContent = `Name: ${name}`;
+    document.getElementById("netid").textContent = `NetID: ${netid}`;
+    document.getElementById("affiliation").textContent = `Affiliation: ${affiliation}`;
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "/mock/login";
+    });
+  </script>
+</body>
+</html>
