@@ -34,6 +34,53 @@ export const signIn = async (email: string, password: string) => {
   return { data, error };
 };
 
+// Sign in using test account credentials from env (for local development)
+export const signInTestUser = async () => {
+  const email = import.meta.env.VITE_TEST_EMAIL as string | undefined;
+  const password = import.meta.env.VITE_TEST_PASSWORD as string | undefined;
+
+  if (!email || !password) {
+    throw new Error('Set VITE_TEST_EMAIL and VITE_TEST_PASSWORD in your .env');
+  }
+
+  return await signIn(email, password);
+};
+
+// Dev helper: create the test user (if needed) and sign in.
+export const createAndSignInTestUser = async () => {
+  if (!import.meta.env.DEV) {
+    throw new Error('createAndSignInTestUser is available only in development');
+  }
+
+  const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
+  const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
+
+  // Try signing in first
+  let { data, error } = await signIn(email, password);
+  if (!error) return { data, error: null };
+
+  // If sign-in failed, attempt to sign up the user
+  const { data: signupData, error: signupError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: 'Test User',
+        university: 'Test University',
+        phone: null
+      }
+    }
+  });
+
+  if (signupError) {
+    // If sign-up failed for some reason other than "user exists", return the error
+    return { data: signupData, error: signupError };
+  }
+
+  // Try signing in again after sign-up
+  const { data: data2, error: error2 } = await signIn(email, password);
+  return { data: data2, error: error2 };
+};
 export const signOut = async () => {
   const { error } = await supabase.auth.signOut();
   return { error };

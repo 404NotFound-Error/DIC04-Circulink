@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Package, Laptop, Book, Home, Shirt, Bike, Gamepad2, Music } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Category {
   id: string;
@@ -9,54 +10,14 @@ interface Category {
 }
 
 const categories: Category[] = [
-  {
-    id: 'electronics',
-    name: 'Electronics',
-    icon: Laptop,
-    subcategories: ['Laptops', 'Phones', 'Tablets', 'Accessories', 'Gaming Consoles']
-  },
-  {
-    id: 'books',
-    name: 'Books & Textbooks',
-    icon: Book,
-    subcategories: ['Engineering', 'Science', 'Arts', 'Business', 'Literature']
-  },
-  {
-    id: 'furniture',
-    name: 'Furniture',
-    icon: Home,
-    subcategories: ['Beds', 'Desks', 'Chairs', 'Storage', 'Decor']
-  },
-  {
-    id: 'clothing',
-    name: 'Clothing',
-    icon: Shirt,
-    subcategories: ['Mens', 'Womens', 'Shoes', 'Accessories']
-  },
-  {
-    id: 'sports',
-    name: 'Sports & Outdoors',
-    icon: Bike,
-    subcategories: ['Bicycles', 'Gym Equipment', 'Camping', 'Sports Gear']
-  },
-  {
-    id: 'entertainment',
-    name: 'Entertainment',
-    icon: Gamepad2,
-    subcategories: ['Video Games', 'Movies', 'Board Games', 'Collectibles']
-  },
-  {
-    id: 'music',
-    name: 'Musical Instruments',
-    icon: Music,
-    subcategories: ['Guitars', 'Keyboards', 'Drums', 'DJ Equipment']
-  },
-  {
-    id: 'other',
-    name: 'Other',
-    icon: Package,
-    subcategories: []
-  }
+  { id: 'electronics', name: 'category.electronics', icon: Laptop, subcategories: ['laptops','phones','tablets','accessories','gaming_consoles'] },
+  { id: 'books', name: 'category.books', icon: Book, subcategories: ['engineering','science','arts','business','literature'] },
+  { id: 'furniture', name: 'category.furniture', icon: Home, subcategories: ['beds','desks','chairs','storage','decor'] },
+  { id: 'clothing', name: 'category.clothing', icon: Shirt, subcategories: ['mens','womens','shoes','accessories'] },
+  { id: 'sports', name: 'category.sports', icon: Bike, subcategories: ['bicycles','gym_equipment','camping','sports_gear'] },
+  { id: 'entertainment', name: 'category.entertainment', icon: Gamepad2, subcategories: ['video_games','movies','board_games','collectibles'] },
+  { id: 'music', name: 'category.music', icon: Music, subcategories: ['guitars','keyboards','drums','dj_equipment'] },
+  { id: 'other', name: 'category.other', icon: Package, subcategories: [] }
 ];
 
 interface CategorySidebarProps {
@@ -75,9 +36,11 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
     );
   };
 
+  const { t } = useLanguage();
+
   return (
     <div className="p-4">
-      <h2 className="text-lg font-bold text-gray-900 mb-4">Categories</h2>
+      <h2 className="text-lg font-bold text-gray-900 mb-4">{t('categoriesTitle')}</h2>
 
       <button
         onClick={() => onCategorySelect('all')}
@@ -87,7 +50,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
             : 'text-gray-700 hover:bg-gray-50'
         }`}
       >
-        All Products
+        {t('allProducts')}
       </button>
 
       <div className="space-y-1">
@@ -113,7 +76,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
               >
                 <div className="flex items-center space-x-3">
                   <Icon className="h-5 w-5" />
-                  <span className="text-sm">{category.name}</span>
+                  <span className="text-sm">{t(category.name)}</span>
                 </div>
                 {category.subcategories && category.subcategories.length > 0 && (
                   <button
@@ -144,7 +107,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                       }`}
                     >
-                      {sub}
+                      {t(`subcategory.${category.id}.${sub}`)}
                     </button>
                   ))}
                 </div>
@@ -155,45 +118,45 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
       </div>
 
       <div className="mt-6 pt-6 border-t">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Price Range</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('priceRange') || 'Price Range'}</h3>
         <div className="space-y-2">
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>Under $25</span>
+            <span>{t('price.under25')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>$25 to $50</span>
+            <span>{t('price.25to50')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>$50 to $100</span>
+            <span>{t('price.50to100')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>$100 & Above</span>
+            <span>{t('price.above100')}</span>
           </label>
         </div>
       </div>
 
       <div className="mt-6 pt-6 border-t">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Condition</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('conditionTitle')}</h3>
         <div className="space-y-2">
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>New</span>
+            <span>{t('condition.new')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>Like New</span>
+            <span>{t('condition.like_new')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>Good</span>
+            <span>{t('condition.good')}</span>
           </label>
           <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" className="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
-            <span>Fair</span>
+            <span>{t('condition.fair')}</span>
           </label>
         </div>
       </div>
