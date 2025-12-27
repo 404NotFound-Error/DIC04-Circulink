@@ -1,5 +1,6 @@
 import React from 'react';
 import { Filter, SlidersHorizontal } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProductHeaderProps {
   totalProducts: number;
@@ -14,12 +15,13 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onSortChange,
   onFilterToggle
 }) => {
+  const { t } = useLanguage();
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">
-            <span className="font-semibold text-gray-900">{totalProducts}</span> results
+            <span className="font-semibold text-gray-900">{totalProducts}</span> {t('results')}
           </span>
 
           {onFilterToggle && (
@@ -36,18 +38,18 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         <div className="flex items-center space-x-3">
           <label className="flex items-center space-x-2">
             <SlidersHorizontal className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-700">Sort by:</span>
+            <span className="text-sm text-gray-700">{t('sortBy')}:</span>
           </label>
           <select
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
-            <option value="relevant">Most Relevant</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="newest">Newest First</option>
-            <option value="rating">Customer Rating</option>
+            <option value="relevant">{t('sort.relevant')}</option>
+            <option value="price-low">{t('sort.price-low')}</option>
+            <option value="price-high">{t('sort.price-high')}</option>
+            <option value="newest">{t('sort.newest')}</option>
+            <option value="rating">{t('sort.rating')}</option>
           </select>
         </div>
       </div>

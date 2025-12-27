@@ -29,6 +29,39 @@ export const useAuth = () => {
         setProfile(profileData);
       }
       
+      // If no user and in dev, create & sign in test user automatically (simple inline)
+      if (!user && import.meta.env.DEV) {
+        try {
+          const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
+          const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
+
+          // Try sign-in
+          const signInRes = await supabase.auth.signInWithPassword({ email, password });
+          if (!signInRes.error && signInRes.data.user) {
+            const newUser = signInRes.data.user;
+            setUser(newUser);
+            const { data: profileData } = await getProfile(newUser.id);
+            setProfile(profileData);
+          } else {
+            // Try sign-up then sign-in
+            await supabase.auth.signUp({
+              email,
+              password,
+              options: { data: { full_name: 'Test User', university: 'Test University' } }
+            });
+            const signInRes2 = await supabase.auth.signInWithPassword({ email, password });
+            if (!signInRes2.error && signInRes2.data.user) {
+              const newUser = signInRes2.data.user;
+              setUser(newUser);
+              const { data: profileData } = await getProfile(newUser.id);
+              setProfile(profileData);
+            }
+          }
+        } catch {
+          // ignore errors in dev
+        }
+      }
+
       setLoading(false);
     };
 
@@ -36,7 +69,7 @@ export const useAuth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
@@ -60,3 +93,5 @@ export const useAuth = () => {
     isAuthenticated: !!user
   };
 };
+
+// (dev auto-create handled inline in this file)
