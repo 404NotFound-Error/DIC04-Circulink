@@ -1,23 +1,22 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Package, Laptop, Book, Home, Shirt, Bike, Gamepad2, Music } from 'lucide-react';
+import React from 'react';
+import { Package, Laptop, Book, Home, Shirt, Bike, Gamepad2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface Category {
   id: string;
   name: string;
   icon: React.ElementType;
-  subcategories?: string[];
 }
 
+// Only keep the specified top-level categories (no subcategories)
 const categories: Category[] = [
-  { id: 'electronics', name: 'category.electronics', icon: Laptop, subcategories: ['laptops','phones','tablets','accessories','gaming_consoles'] },
-  { id: 'books', name: 'category.books', icon: Book, subcategories: ['engineering','science','arts','business','literature'] },
-  { id: 'furniture', name: 'category.furniture', icon: Home, subcategories: ['beds','desks','chairs','storage','decor'] },
-  { id: 'clothing', name: 'category.clothing', icon: Shirt, subcategories: ['mens','womens','shoes','accessories'] },
-  { id: 'sports', name: 'category.sports', icon: Bike, subcategories: ['bicycles','gym_equipment','camping','sports_gear'] },
-  { id: 'entertainment', name: 'category.entertainment', icon: Gamepad2, subcategories: ['video_games','movies','board_games','collectibles'] },
-  { id: 'music', name: 'category.music', icon: Music, subcategories: ['guitars','keyboards','drums','dj_equipment'] },
-  { id: 'other', name: 'category.other', icon: Package, subcategories: [] }
+  { id: 'clothing', name: 'category.clothing', icon: Shirt },
+  { id: 'furniture', name: 'category.furniture', icon: Home },
+  { id: 'electronics', name: 'category.electronics', icon: Laptop },
+  { id: 'books', name: 'category.books', icon: Book },
+  { id: 'sports', name: 'category.sports', icon: Bike },
+  { id: 'other', name: 'category.other', icon: Package },
+  { id: 'entertainment', name: 'category.entertainment', icon: Gamepad2 }
 ];
 
 interface CategorySidebarProps {
@@ -26,16 +25,6 @@ interface CategorySidebarProps {
 }
 
 const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onCategorySelect }) => {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['electronics']);
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
   const { t } = useLanguage();
 
   return (
@@ -56,7 +45,6 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
       <div className="space-y-1">
         {categories.map((category) => {
           const Icon = category.icon;
-          const isExpanded = expandedCategories.includes(category.id);
           const isSelected = selectedCategory === category.id;
 
           return (
@@ -69,49 +57,13 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ selectedCategory, onC
                 }`}
                 onClick={() => {
                   onCategorySelect(category.id);
-                  if (category.subcategories && category.subcategories.length > 0) {
-                    toggleCategory(category.id);
-                  }
                 }}
               >
                 <div className="flex items-center space-x-3">
                   <Icon className="h-5 w-5" />
                   <span className="text-sm">{t(category.name)}</span>
                 </div>
-                {category.subcategories && category.subcategories.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCategory(category.id);
-                    }}
-                    className="p-1"
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
               </div>
-
-              {isExpanded && category.subcategories && category.subcategories.length > 0 && (
-                <div className="ml-8 mt-1 space-y-1">
-                  {category.subcategories.map((sub) => (
-                    <button
-                      key={sub}
-                      onClick={() => onCategorySelect(`${category.id}-${sub.toLowerCase()}`)}
-                      className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors ${
-                        selectedCategory === `${category.id}-${sub.toLowerCase()}`
-                          ? 'text-orange-600 font-medium'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      {t(`subcategory.${category.id}.${sub}`)}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           );
         })}

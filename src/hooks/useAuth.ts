@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase, getCurrentUser, getProfile } from '../lib/supabase';
+import { apiClient, User } from '../lib/api';
+import { getCurrentUser, getProfile } from '../lib/supabase';
 
 interface Profile {
   id: string;
@@ -21,44 +21,47 @@ export const useAuth = () => {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { user } = await getCurrentUser();
-      setUser(user);
+      const { user: currentUser } = await getCurrentUser();
+      setUser(currentUser);
       
-      if (user) {
-        const { data: profileData } = await getProfile(user.id);
+      if (currentUser) {
+        const { data: profileData } = await getProfile(currentUser.id);
         setProfile(profileData);
       }
       
-      // If no user and in dev, create & sign in test user automatically (simple inline)
-      if (!user && import.meta.env.DEV) {
+      // If no user and in dev, try auto-login with test credentials
+      if (!currentUser && import.meta.env.DEV) {
         try {
           const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
           const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
 
-          // Try sign-in
-          const signInRes = await supabase.auth.signInWithPassword({ email, password });
-          if (!signInRes.error && signInRes.data.user) {
-            const newUser = signInRes.data.user;
-            setUser(newUser);
-            const { data: profileData } = await getProfile(newUser.id);
+          // Try login
+          const loginResult = await apiClient.login(email, password);
+          if (loginResult.data.user) {
+            setUser(loginResult.data.user);
+            const { data: profileData } = await getProfile(loginResult.data.user.id);
             setProfile(profileData);
-          } else {
-            // Try sign-up then sign-in
-            await supabase.auth.signUp({
-              email,
-              password,
-              options: { data: { full_name: 'Test User', university: 'Test University' } }
+          }
+        } catch (error) {
+          // Try register then login
+          try {
+            await apiClient.register({
+              email: (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
+              password: (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123',
+              name: 'Test User'
             });
-            const signInRes2 = await supabase.auth.signInWithPassword({ email, password });
-            if (!signInRes2.error && signInRes2.data.user) {
-              const newUser = signInRes2.data.user;
-              setUser(newUser);
-              const { data: profileData } = await getProfile(newUser.id);
+            const loginResult = await apiClient.login(
+              (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
+              (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123'
+            );
+            if (loginResult.data.user) {
+              setUser(loginResult.data.user);
+              const { data: profileData } = await getProfile(loginResult.data.user.id);
               setProfile(profileData);
             }
+          } catch {
+            // ignore errors in dev
           }
-        } catch {
-          // ignore errors in dev
         }
       }
 
@@ -67,23 +70,8 @@ export const useAuth = () => {
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const { data: profileData } = await getProfile(session.user.id);
-          setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    // Note: Express API doesn't have real-time auth state changes like Supabase
+    // For now, we rely on initial load and explicit login/logout calls
   }, []);
 
   return {
@@ -93,5 +81,3 @@ export const useAuth = () => {
     isAuthenticated: !!user
   };
 };
-
-// (dev auto-create handled inline in this file)
