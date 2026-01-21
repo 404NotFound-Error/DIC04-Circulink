@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemCondition {
+  excellent
+  good
+  fair
+  poor
+}
+
+enum ItemStatus {
+  available
+  sold
+  reserved
+}
+
+enum OrderStatus {
+  pending
+  accepted
+  paid
+  canceled
+  completed
+}
+
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  email            String    @unique
+  passwordHash     String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  profile          Profile?
+  favorites        Favorite[]
+  items            Item[]
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  buyingOrders     Order[]   @relation("OrderBuyer")
+  sellingOrders    Order[]   @relation("OrderSeller")
+}
+
+model Profile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @db.Uuid
+  displayName String
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     Item[]
+
+  @@unique([name])
+}
+
+model Item {
+  id         String        @id @default(uuid()) @db.Uuid
+  title      String
+  description String?
+  price      Decimal       @db.Decimal(10, 2)
+  condition  ItemCondition
+  status     ItemStatus    @default(available)
+  images     String[]
+  sellerId   String        @db.Uuid
+  categoryId String        @db.Uuid
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  seller     User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category   Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  favorites  Favorite[]
+  messages   Message[]
+  orders     Order[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  itemId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId])
+  @@index([itemId])
+}
+
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  itemId     String   @db.Uuid
+  senderId   String   @db.Uuid
+  receiverId String   @db.Uuid
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([itemId])
+}
+
+model Order {
+  id        String      @id @default(uuid()) @db.Uuid
+  itemId    String      @db.Uuid
+  buyerId   String      @db.Uuid
+  sellerId  String      @db.Uuid
+  price     Decimal     @db.Decimal(10, 2)
+  status    OrderStatus @default(pending)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  item      Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  buyer     User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller    User        @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
