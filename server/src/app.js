@@ -11,10 +11,12 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 
+app.disable("x-powered-by");
+
 morgan.token("id", (req) => req.id);
 
 app.use(requestId);
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(
   cors({
     origin: env.corsOrigin ? env.corsOrigin.split(",") : true,
@@ -26,6 +28,16 @@ app.use(
   rateLimit({
     windowMs: env.rateLimitWindowMs,
     max: env.rateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
+const authRateLimitMax = Math.max(1, Math.floor(env.rateLimitMax / 2));
+app.use(
+  "/auth",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: authRateLimitMax,
     standardHeaders: true,
     legacyHeaders: false
   })
