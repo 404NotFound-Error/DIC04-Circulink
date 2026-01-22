@@ -3,11 +3,11 @@
 本清单覆盖从 MVP 到可上线版本的完整工作项。
 
 ## 0) 项目基础
-- [ ] 明确产品范围（角色、交易规则、支付范围）。
-- [ ] 统一 API 契约（请求/响应结构、分页、错误格式）。
-- [ ] 定义分类与上架规则（含审核策略）。
+- [x] 明确产品范围（角色、交易规则、支付范围）。见 `docs/foundation.md`。
+- [x] 统一 API 契约（请求/响应结构、分页、错误格式）。见 `docs/foundation.md`。
+- [x] 定义分类与上架规则（含审核策略）。见 `docs/foundation.md`。
 - [x] 决定认证与数据来源（采用 Express + Prisma）。
-- [ ] 环境策略（本地/测试/生产）。
+- [x] 环境策略（本地/测试/生产）。见 `docs/foundation.md`。
 
 ## 1) 数据层（Prisma + Postgres）
 - [ ] 复核 `prisma/schema.prisma`：
