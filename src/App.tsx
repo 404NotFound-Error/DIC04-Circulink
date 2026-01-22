@@ -6,6 +6,8 @@ import ProfilePage from './pages/ProfilePage';
 import AboutPage from './pages/AboutPage';
 import CartPage from './pages/CartPage';
 import CategoryPage from './pages/CategoryPage';
+import SellPage from './pages/SellPage';
+import BuyPage from './pages/BuyPage';
 import NewItemModal from './components/NewItemModal';
 import FavoritesModal from './components/FavoritesModal';
 
@@ -25,7 +27,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'profile' | 'about' | 'cart' | 'category'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'profile' | 'about' | 'cart' | 'category' | 'sell' | 'buy'>('home');
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; products: Product[] } | null>(null);
 
   const handleSearch = (query: string) => {
@@ -52,6 +54,14 @@ function App() {
     setCurrentPage('cart');
   };
 
+  const handleNavigateToSell = () => {
+    setCurrentPage('sell');
+  };
+
+  const handleNavigateToBuy = () => {
+    setCurrentPage('buy');
+  };
+
   const handleNavigateToCategory = (categoryName: string, products: Product[]) => {
     setSelectedCategory({ name: categoryName, products });
     setCurrentPage('category');
@@ -71,6 +81,8 @@ function App() {
           onNavigateToProfile={handleNavigateToProfile}
           onNavigateToAbout={handleNavigateToAbout}
           onNavigateToCart={handleNavigateToCart}
+          onNavigateToSell={handleNavigateToSell}
+          onNavigateToBuy={handleNavigateToBuy}
         />
 
         {currentPage === 'home' ? (
@@ -94,6 +106,10 @@ function App() {
             products={selectedCategory.products}
             onNavigateBack={handleNavigateBack}
           />
+        ) : currentPage === 'sell' ? (
+          <SellPage onNavigateBack={handleNavigateBack} />
+        ) : currentPage === 'buy' ? (
+          <BuyPage onNavigateBack={handleNavigateBack} />
         ) : null}
         
         <FavoritesModal

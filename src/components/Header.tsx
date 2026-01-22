@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Menu, X, ShoppingBag, Heart, LogOut } from 'lucide-react';
+import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { signOut } from '../lib/auth';
+import { signOut } from '../lib/supabase';
 import AuthModal from './AuthModal';
 
 interface HeaderProps {
@@ -12,16 +12,19 @@ interface HeaderProps {
   onNavigateToProfile: () => void;
   onNavigateToAbout: () => void;
   onNavigateToCart: () => void;
+  onNavigateToSell: () => void;
+  onNavigateToBuy: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, onNavigateToProfile, onNavigateToAbout, onNavigateToCart }) => {
+const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, onNavigateToProfile, onNavigateToAbout, onNavigateToCart, onNavigateToSell, onNavigateToBuy }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [allMenuOpen, setAllMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { lang, toggleLang, t } = useLanguage();
-  const { user, profile, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +33,6 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
 
   const handleSignOut = async () => {
     await signOut();
-    setUserMenuOpen(false);
   };
 
   const openAuthModal = (mode: 'signin' | 'signup') => {
@@ -42,132 +44,151 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
 
   return (
     <>
-      <header className="bg-gray-900 shadow-sm border-b sticky top-0 z-50">
+      <header className="bg-[#3f5e45] shadow-sm border-b border-[#2f4b32] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <ShoppingBag className="h-8 w-8 text-orange-500" />
-            <h1 className="text-2xl font-bold text-white">Circulink</h1>
+            <h1 className="text-sm font-bold tracking-[0.35em] text-[#f2f8ee]">CIRCULINK</h1>
           </div>
 
           {/* Search Bar - Desktop (center) */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-6">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center mx-6">
+            <div className="flex items-center gap-2 rounded-lg bg-[#6a8d6d] px-3 py-1.5 text-[#e8f2e4]">
+              <Sparkles className="h-4 w-4 text-[#e8f2e4]" fill="currentColor" />
+              <div className="text-[10px] leading-tight">
+                <div className="font-semibold">AI Search</div>
+                <div className="text-[9px] opacity-90">Assistant</div>
+              </div>
+            </div>
+            <div className="ml-4 flex h-8 flex-1 items-stretch overflow-visible rounded-md border border-[#8db28d] bg-[#e6f0e1] relative">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setAllMenuOpen((prev) => !prev)}
+                  className="flex h-full items-center gap-1 border-r border-[#8db28d] bg-[#d9e8d2] px-3 text-xs font-semibold text-[#35513a]"
+                >
+                  All
+                  <ChevronDown className="h-3 w-3" fill="currentColor" />
+                </button>
+                {allMenuOpen && (
+                  <div className="absolute left-0 top-10 w-48 rounded-md bg-[#f3faf0] shadow-[0_12px_24px_-12px_rgba(0,0,0,0.45)] border border-[#c8ddc3] text-[#2f4b32] text-[10px]">
+                    <div className="px-3 py-2 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Clothing
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Furniture
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Electronics
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Office &amp; Study Supplies
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Food &amp; Snacks
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Daily Essentials
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        Art &amp; Decor
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border-2 border-orange-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Search"
+                className="h-full w-full bg-transparent px-3 text-xs text-[#35513a] placeholder:text-[#6f8f6f] focus:outline-none"
               />
+              <button
+                type="submit"
+                className="flex h-full items-center justify-center border-l border-[#8db28d] bg-[#86b18a] px-3 text-[#2f4b32]"
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4" />
+              </button>
             </div>
           </form>
 
-          {/* Desktop Navigation: language, profile, About, icons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Language switch */}
-            <div>
-              <button
-                onClick={toggleLang}
-                className="px-3 py-1 bg-gray-800 text-gray-200 rounded-md border border-gray-700 hover:bg-gray-700"
-                aria-label="Toggle language"
-              >
-                {lang === 'en' ? 'EN' : '中'}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-5 text-xs text-[#e6f1e2]">
+            <div className="relative">
+              <button onClick={() => setLangMenuOpen((prev) => !prev)} className="flex items-center gap-1">
+                {lang === 'en' ? 'EN' : 'ZH'}
+                <ChevronDown className="h-3 w-3" fill="currentColor" />
               </button>
-            </div>
-
-            {/* Profile button */}
-            <button
-              onClick={onNavigateToProfile}
-              className="px-4 py-2 text-sm text-gray-300 hover:text-white border border-gray-700 rounded-md hover:bg-gray-800 transition-colors"
-              aria-label={t('profile')}
-            >
-              <User className="h-5 w-5 inline-block mr-2" />
-              {t('profile')}
-            </button>
-
-            {isAuthenticated ? (
-              <>
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
+              {langMenuOpen && (
+                <div className="absolute right-0 top-8 w-40 rounded-md bg-[#f3faf0] shadow-[0_12px_24px_-12px_rgba(0,0,0,0.45)] border border-[#c8ddc3] text-[#2f4b32] text-[10px]">
+                  <div className="px-3 py-2 space-y-2">
+                    <div className="text-[9px] uppercase tracking-wider text-[#4b6b4f]">Change Language</div>
                     <button
-                      onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center space-x-2 p-2 text-gray-300 hover:text-white"
+                      onClick={() => {
+                        if (lang !== 'en') toggleLang();
+                        setLangMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 w-full text-left"
                     >
-                      <img
-                        src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=F97316&color=fff`}
-                        alt={profile?.full_name}
-                        className="w-8 h-8 rounded-full border-2 border-orange-500"
-                      />
-                      <span className="text-sm font-medium">{profile?.full_name}</span>
+                      <span className="h-2 w-2 rounded-full bg-[#56b06a]" />
+                      English-EN
                     </button>
-
-                    {userMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-2">
-                        <div className="px-4 py-2 border-b">
-                          <p className="text-sm font-medium text-gray-900">{profile?.full_name}</p>
-                          <p className="text-xs text-gray-500">{profile?.university}</p>
-                        </div>
-                        <button
-                          onClick={handleSignOut}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          <span>{t('signOut')}</span>
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (lang !== 'zh') toggleLang();
+                        setLangMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 w-full text-left"
+                    >
+                      <span className="h-2 w-2 rounded-full bg-[#c7d8c6]" />
+                      Chinese-CN
+                    </button>
                   </div>
-
-                  <button onClick={onNavigateToAbout} className="text-sm text-gray-300 hover:text-white">{t('about')}</button>
-                  
                 </div>
-              </>
-            ) : (
-                <div className="flex items-center space-x-3">
-              <button onClick={onNavigateToAbout} className="text-sm text-gray-300 hover:text-white">{t('about')}</button>
-                <button
-                  onClick={() => openAuthModal('signin')}
-                  className="text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                    {t('signIn')}
-                </button>
-                <button
-                  onClick={() => openAuthModal('signup')}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                    {t('signUp')}
-                </button>
-              </div>
-            )}
-
-            {/* Right-side icons visible to all desktop users */}
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={onShowFavorites}
-                className="p-2 text-gray-300 hover:text-orange-400 hover:bg-gray-800 rounded-lg transition-all duration-200 transform hover:scale-110"
-                aria-label={t('favorites')}
-              >
-                <Heart className="h-6 w-6" />
-              </button>
-
-              <button onClick={onNavigateToCart} className="p-2 text-gray-300 hover:text-orange-400 hover:bg-gray-800 rounded-lg transition-all duration-200 transform hover:scale-110" aria-label={t('cart')}>
-                <ShoppingBag className="h-6 w-6" />
-              </button>
-
-              <button className="p-2 text-gray-300 hover:text-orange-400 hover:bg-gray-800 rounded-lg transition-all duration-200 transform hover:scale-110 relative" aria-label={t('messages')}>
-                <MessageCircle className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">3</span>
-              </button>
+              )}
             </div>
+            <button onClick={onNavigateToProfile} className="hover:text-white">
+              Profile
+            </button>
+            <button onClick={onNavigateToAbout} className="hover:text-white">
+              About
+            </button>
+            <button
+              onClick={onShowFavorites}
+              className="p-1.5 text-[#e6f1e2] hover:text-white"
+              aria-label={t('favorites')}
+            >
+              <Star className="h-4 w-4" fill="currentColor" />
+            </button>
+            <button
+              onClick={onNavigateToCart}
+              className="p-1.5 text-[#e6f1e2] hover:text-white relative"
+              aria-label={t('cart')}
+            >
+              <ShoppingCart className="h-4 w-4" fill="currentColor" />
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f0d27a]" />
+            </button>
+            <button className="p-1.5 text-[#e6f1e2] hover:text-white relative" aria-label={t('messages')}>
+              <Bell className="h-4 w-4" fill="currentColor" />
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f27b7b]" />
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-gray-300 hover:text-white"
+            className="md:hidden p-2 text-[#e6f1e2] hover:text-white"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -177,13 +198,13 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
         <div className="md:hidden pb-4">
           <form onSubmit={handleSearch}>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#6f8f6f]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border-2 border-orange-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full pl-10 pr-4 py-2 border border-[#89a789] bg-[#edf6e7] rounded-lg focus:ring-2 focus:ring-[#7aa07a] focus:border-[#7aa07a] text-[#2f4b32] placeholder:text-[#7a997a]"
               />
             </div>
           </form>
@@ -197,26 +218,26 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
                 <>
                   <button
                     onClick={onNewItem}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2"
+                    className="bg-[#6ea16f] text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2"
                   >
                     <Plus className="h-4 w-4" />
                     <span>{t('sellItem')}</span>
                   </button>
                   <button 
                     onClick={onShowFavorites}
-                    className="flex items-center justify-center space-x-2 text-gray-600"
+                    className="flex items-center justify-center space-x-2 text-[#e6f1e2]"
                   >
                     <Heart className="h-5 w-5" />
                     <span>{t('favorites')}</span>
                   </button>
-                  <button className="flex items-center justify-center space-x-2 text-gray-600">
+                  <button className="flex items-center justify-center space-x-2 text-[#e6f1e2]">
                     <MessageCircle className="h-5 w-5" />
                     <span>{t('messages')}</span>
                     <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">3</span>
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-center space-x-2 text-gray-600"
+                    className="flex items-center justify-center space-x-2 text-[#e6f1e2]"
                   >
                     <LogOut className="h-5 w-5" />
                     <span>{t('signOut')}</span>
@@ -226,13 +247,13 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
                 <>
                   <button
                     onClick={() => openAuthModal('signin')}
-                    className="text-gray-600 px-4 py-2 rounded-lg"
+                    className="text-[#e6f1e2] px-4 py-2 rounded-lg"
                   >
                     {t('signIn')}
                   </button>
                   <button
                     onClick={() => openAuthModal('signup')}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-lg"
+                    className="bg-[#6ea16f] text-white px-4 py-2 rounded-lg"
                   >
                     {t('signUp')}
                   </button>
@@ -245,18 +266,18 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
       </header>
 
       {/* Sub-top bar with three action buttons */}
-      <div className="bg-emerald-100 border-t border-b border-emerald-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-[#d7ecd0] border-t border-b border-[#b4d3b1]">
+        <div className="w-full">
           <div className="flex items-stretch">
-            <button className="flex-1 text-center py-4 text-emerald-800 hover:bg-emerald-200 transition-colors font-medium text-lg shadow-inner">
+            <button onClick={onNavigateToBuy} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Start Buying
             </button>
-            <div className="w-px bg-emerald-200" />
-            <button className="flex-1 text-center py-4 text-emerald-800 hover:bg-emerald-200 transition-colors font-medium text-lg shadow-inner">
+            <div className="w-px bg-[#b4d3b1]" />
+            <button onClick={onNavigateToSell} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Sell Now
             </button>
-            <div className="w-px bg-emerald-200" />
-            <button className="flex-1 text-center py-4 text-emerald-800 hover:bg-emerald-200 transition-colors font-medium text-lg shadow-inner">
+            <div className="w-px bg-[#b4d3b1]" />
+            <button className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Donation
             </button>
           </div>

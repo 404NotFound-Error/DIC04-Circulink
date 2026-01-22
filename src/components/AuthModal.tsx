@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, MapPin, Phone } from 'lucide-react';
-import { signIn, signUp } from '../lib/auth';
+import { signIn, signUp } from '../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -27,11 +27,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
     try {
       if (mode === 'signin') {
-        await signIn(formData.email, formData.password);
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) throw error;
       } else {
-        await signUp(formData.email, formData.password, {
-          name: formData.full_name
+        const { error } = await signUp(formData.email, formData.password, {
+          full_name: formData.full_name,
+          university: formData.university,
+          phone: formData.phone || undefined
         });
+        if (error) throw error;
       }
       
       onClose();
