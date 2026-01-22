@@ -6,6 +6,7 @@ const { createHttpError } = require("../utils/errors");
 const usersByEmail = new Map();
 const usersById = new Map();
 const refreshTokens = new Map();
+const refreshTokenFamilies = new Map();
 
 const createUser = async ({ email, password, name }) => {
   if (usersByEmail.has(email)) {
@@ -30,28 +31,75 @@ const createUser = async ({ email, password, name }) => {
 };
 
 const findUserByEmail = (email) => usersByEmail.get(email);
+const findUserById = (id) => usersById.get(id);
 
 const validatePassword = async (user, password) =>
   bcrypt.compare(password, user.passwordHash);
 
-const storeRefreshToken = (token, payload) => {
-  refreshTokens.set(token, {
-    userId: payload.sub,
-    issuedAt: Date.now()
+const storeRefreshToken = ({ tokenId, userId, familyId, expiresAt }) => {
+  refreshTokens.set(tokenId, {
+    tokenId,
+    userId,
+    familyId,
+    issuedAt: Date.now(),
+    expiresAt,
+    revokedAt: null,
+    revokedReason: null,
+    replacedByTokenId: null
   });
+
+  if (!refreshTokenFamilies.has(familyId)) {
+    refreshTokenFamilies.set(familyId, new Set());
+  }
+  refreshTokenFamilies.get(familyId).add(tokenId);
 };
 
-const revokeRefreshToken = (token) => {
-  refreshTokens.delete(token);
+const getRefreshToken = (tokenId) => refreshTokens.get(tokenId);
+
+const revokeRefreshToken = (tokenId, reason = "REVOKED", replacedByTokenId = null) => {
+  const token = refreshTokens.get(tokenId);
+  if (!token || token.revokedAt) {
+    return;
+  }
+
+  token.revokedAt = Date.now();
+  token.revokedReason = reason;
+  token.replacedByTokenId = replacedByTokenId;
 };
 
-const isRefreshTokenActive = (token) => refreshTokens.has(token);
+const revokeRefreshTokenFamily = (familyId, reason = "REUSE_DETECTED") => {
+  const family = refreshTokenFamilies.get(familyId);
+  if (!family) {
+    return;
+  }
+
+  for (const tokenId of family) {
+    revokeRefreshToken(tokenId, reason);
+  }
+};
+
+const isRefreshTokenActive = (tokenId) => {
+  const token = refreshTokens.get(tokenId);
+  if (!token) {
+    return false;
+  }
+  if (token.revokedAt) {
+    return false;
+  }
+  if (token.expiresAt && token.expiresAt <= Date.now()) {
+    return false;
+  }
+  return true;
+};
 
 module.exports = {
   createUser,
   findUserByEmail,
+  findUserById,
   validatePassword,
   storeRefreshToken,
+  getRefreshToken,
   revokeRefreshToken,
+  revokeRefreshTokenFamily,
   isRefreshTokenActive
 };
