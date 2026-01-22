@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Plus, MessageCircle, User, Menu, X, ShoppingBag, Heart, LogOut } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { signOut } from '../lib/supabase';
+import { signOut } from '../lib/auth';
 import AuthModal from './AuthModal';
 
 interface HeaderProps {

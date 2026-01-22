@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut } from 'lucide-react';
-import { signOut } from '../lib/supabase';
+import { signOut } from '../lib/auth';
 
 const ProfilePage: React.FC<{ onNavigateBack: () => void }> = ({ onNavigateBack }) => {
   const { t } = useLanguage();
