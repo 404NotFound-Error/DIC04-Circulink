@@ -9,6 +9,9 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
   JWT_REFRESH_SECRET: z.string().min(1, "JWT_REFRESH_SECRET is required"),
+  JWT_ACCESS_TTL: z.string().default("15m"),
+  JWT_REFRESH_TTL: z.string().default("7d"),
+  BCRYPT_ROUNDS: z.string().default("10"),
   CORS_ORIGIN: z.string().optional(),
   UPLOAD_DIR: z.string().default("uploads")
 });
@@ -19,4 +22,10 @@ export const serverConfig = {
   port: parseInt(env.PORT, 10) || 4000,
   corsOrigins: env.CORS_ORIGIN?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? ["*"],
   uploadDir: env.UPLOAD_DIR
+};
+
+export const authConfig = {
+  accessTtl: env.JWT_ACCESS_TTL,
+  refreshTtl: env.JWT_REFRESH_TTL,
+  bcryptRounds: parseInt(env.BCRYPT_ROUNDS, 10) || 10
 };

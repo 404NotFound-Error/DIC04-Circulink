@@ -107,5 +107,13 @@ export const deleteItem = async (id: string, userId: string) => {
   const item = await prisma.item.findUnique({ where: { id } });
   if (!item) throw new NotFoundError("Item not found");
   if (item.sellerId !== userId) throw new ForbiddenError("Only the seller can delete this item");
-  await prisma.item.delete({ where: { id } });
+  await prisma.$transaction([
+    prisma.favorite.deleteMany({ where: { itemId: id } }),
+    prisma.message.deleteMany({ where: { thread: { itemId: id } } }),
+    prisma.messageThread.deleteMany({ where: { itemId: id } }),
+    prisma.order.deleteMany({ where: { itemId: id } }),
+    prisma.itemView.deleteMany({ where: { itemId: id } }),
+    prisma.itemStats.deleteMany({ where: { itemId: id } }),
+    prisma.item.delete({ where: { id } })
+  ]);
 };

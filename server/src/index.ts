@@ -1,5 +1,5 @@
 import { createServer } from "http";
-import { createApp } from "./app.js";
+import { createApp } from "./app.ts";
 import { logger } from "./lib/logger.js";
 import { serverConfig } from "./config/env.js";
 

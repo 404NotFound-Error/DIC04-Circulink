@@ -42,6 +42,8 @@ model User {
   passwordHash  String
   name          String?
   role          Role            @default(USER)
+  emailVerifiedAt DateTime?
+  profile       Profile?
   items         Item[]
   favorites     Favorite[]
   messages      Message[]
@@ -50,8 +52,24 @@ model User {
   ordersAsBuyer   Order[]         @relation("ordersAsBuyer")
   ordersAsSeller  Order[]         @relation("ordersAsSeller")
   refreshTokens RefreshToken[]
+  emailVerifications EmailVerificationToken[]
+  passwordResets     PasswordResetToken[]
+  itemViews     ItemView[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  displayName String
+  avatarUrl String?
+  university String?
+  phone     String?
+  bio       String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Category {
@@ -77,11 +95,17 @@ model Item {
   favorites   Favorite[]
   threads     MessageThread[]
   orders      Order[]
+  views       ItemView[]
+  stats       ItemStats?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   @@index([categoryId])
   @@index([sellerId])
   @@index([status])
+  @@index([condition])
+  @@index([price])
+  @@index([createdAt])
+  @@index([categoryId, status, createdAt])
 }
 
 model Favorite {
@@ -120,6 +144,7 @@ model Message {
   createdAt DateTime @default(now())
 
   @@index([threadId])
+  @@index([senderId])
 }
 
 model Order {
@@ -150,4 +175,51 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ItemView {
+  id        String   @id @default(cuid())
+  itemId    String
+  viewerId  String?
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  viewer    User?    @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@index([viewerId])
+  @@index([createdAt])
+}
+
+model ItemStats {
+  id          String   @id @default(cuid())
+  itemId      String   @unique
+  viewCount   Int      @default(0)
+  lastViewedAt DateTime?
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

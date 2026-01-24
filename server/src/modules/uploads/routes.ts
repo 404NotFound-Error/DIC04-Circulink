@@ -6,6 +6,7 @@ import { requireAuth } from "../../middleware/auth.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { serverConfig } from "../../config/env.js";
 import { BadRequestError } from "../../utils/errors.js";
+import { uploadFileController } from "./controller.js";
 
 const router = Router();
 
@@ -37,13 +38,6 @@ const upload = multer({
   }
 });
 
-router.post("/", requireAuth, upload.single("file"), asyncHandler(async (req, res) => {
-  if (!req.file) throw new BadRequestError("File is required");
-  const relativePath = path.join(
-    "/uploads",
-    path.relative(serverConfig.uploadDir, req.file.path).split(path.sep).join("/")
-  );
-  res.status(201).json({ data: { path: relativePath } });
-}));
+router.post("/", requireAuth, upload.single("file"), asyncHandler(uploadFileController));
 
 export default router;

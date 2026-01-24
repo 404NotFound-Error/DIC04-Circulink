@@ -5,9 +5,11 @@ import favoritesRouter from "../modules/favorites/routes.js";
 import messagesRouter from "../modules/messages/routes.js";
 import ordersRouter from "../modules/orders/routes.js";
 import uploadsRouter from "../modules/uploads/routes.js";
+import authRouter from "../modules/auth/routes.js";
 
 export const router = Router();
 
+router.use("/auth", authRouter);
 router.use("/categories", categoriesRouter);
 router.use("/items", itemsRouter);
 router.use("/favorites", favoritesRouter);
