@@ -1,12 +1,9 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
-import { listCategories } from "./service.js";
+import { listCategoriesController } from "./controller.js";
 
 const router = Router();
 
-router.get("/", asyncHandler(async (_req, res) => {
-  const categories = await listCategories();
-  res.json({ data: categories });
-}));
+router.get("/", asyncHandler(listCategoriesController));
 
 export default router;
