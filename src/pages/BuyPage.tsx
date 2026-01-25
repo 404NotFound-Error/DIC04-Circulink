@@ -1,24 +1,44 @@
 import React from 'react';
+import ProductGrid from '../components/ProductGrid';
 
 interface BuyPageProps {
   onNavigateBack: () => void;
 }
 
+const sampleProducts = Array.from({ length: 8 }).map((_, i) => ({
+  id: `p-${i + 1}`,
+  title: `title1`,
+  price: 20,
+  image: `https://via.placeholder.com/600x600?text=Item+${i + 1}`,
+  condition: 'good',
+  location: 'Campus',
+  seller: 'Seller',
+  rating: 4,
+  reviewCount: 12,
+}));
+
 const BuyPage: React.FC<BuyPageProps> = ({ onNavigateBack }) => {
+  const handleProductClick = (id: string) => {
+    console.log('product clicked', id);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <button
-          onClick={onNavigateBack}
-          className="mb-6 px-4 py-2 bg-[#5cb85c] text-white rounded-lg hover:bg-[#4cae4c] transition-colors"
-        >
-          Back to Home
-        </button>
-        
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Buy Items</h1>
-          <p className="text-gray-600 text-lg">Buy page coming soon...</p>
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex items-center gap-4 mb-6">
+          <button onClick={onNavigateBack} className="text-2xl text-gray-800">←</button>
+          <h2 className="text-xl font-semibold">Shopping Continue</h2>
         </div>
+
+        <hr className="border-t border-gray-200 mb-6" />
+
+        <section className="bg-emerald-50/60 rounded-xl p-8 mb-8">
+          <ProductGrid products={sampleProducts.slice(0,4)} onProductClick={handleProductClick} />
+        </section>
+
+        <section className="bg-emerald-50/60 rounded-xl p-8">
+          <ProductGrid products={sampleProducts.slice(4,8)} onProductClick={handleProductClick} />
+        </section>
       </div>
     </div>
   );

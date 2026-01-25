@@ -14,9 +14,10 @@ interface HeaderProps {
   onNavigateToCart: () => void;
   onNavigateToSell: () => void;
   onNavigateToBuy: () => void;
+  onNavigateToDonation: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, onNavigateToProfile, onNavigateToAbout, onNavigateToCart, onNavigateToSell, onNavigateToBuy }) => {
+const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, onNavigateToProfile, onNavigateToAbout, onNavigateToCart, onNavigateToSell, onNavigateToBuy, onNavigateToDonation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [allMenuOpen, setAllMenuOpen] = useState(false);
@@ -277,7 +278,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
               Sell Now
             </button>
             <div className="w-px bg-[#b4d3b1]" />
-            <button className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
+            <button onClick={onNavigateToDonation} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Donation
             </button>
           </div>
