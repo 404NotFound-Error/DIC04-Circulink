@@ -8,6 +8,9 @@ import CartPage from './pages/CartPage';
 import CategoryPage from './pages/CategoryPage';
 import SellPage from './pages/SellPage';
 import BuyPage from './pages/BuyPage';
+import DonationPage from './pages/DonationPage';
+import DonationFormPage from './pages/DonationFormPage';
+import DonationThanksPage from './pages/DonationThanksPage';
 import NewItemModal from './components/NewItemModal';
 import FavoritesModal from './components/FavoritesModal';
 
@@ -27,7 +30,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'profile' | 'about' | 'cart' | 'category' | 'sell' | 'buy'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'profile' | 'about' | 'cart' | 'category' | 'sell' | 'buy' | 'donation' | 'donationForm' | 'donationThanks'>('home');
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; products: Product[] } | null>(null);
 
   const handleSearch = (query: string) => {
@@ -62,6 +65,18 @@ function App() {
     setCurrentPage('buy');
   };
 
+  const handleNavigateToDonation = () => {
+    setCurrentPage('donation');
+  };
+
+  const handleStartDonating = () => {
+    setCurrentPage('donationForm');
+  };
+
+  const handleShowDonationThanks = () => {
+    setCurrentPage('donationThanks');
+  };
+
   const handleNavigateToCategory = (categoryName: string, products: Product[]) => {
     setSelectedCategory({ name: categoryName, products });
     setCurrentPage('category');
@@ -83,6 +98,7 @@ function App() {
           onNavigateToCart={handleNavigateToCart}
           onNavigateToSell={handleNavigateToSell}
           onNavigateToBuy={handleNavigateToBuy}
+          onNavigateToDonation={handleNavigateToDonation}
         />
 
         {currentPage === 'home' ? (
@@ -110,6 +126,12 @@ function App() {
           <SellPage onNavigateBack={handleNavigateBack} />
         ) : currentPage === 'buy' ? (
           <BuyPage onNavigateBack={handleNavigateBack} />
+        ) : currentPage === 'donation' ? (
+          <DonationPage onNavigateBack={handleNavigateBack} onStartDonating={handleStartDonating} />
+        ) : currentPage === 'donationForm' ? (
+          <DonationFormPage onNavigateBack={handleNavigateBack} onConfirm={handleShowDonationThanks} />
+        ) : currentPage === 'donationThanks' ? (
+          <DonationThanksPage onNavigateBack={handleNavigateBack} />
         ) : null}
         
         <FavoritesModal
