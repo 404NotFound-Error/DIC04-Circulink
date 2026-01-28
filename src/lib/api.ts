@@ -34,9 +34,9 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
@@ -70,18 +70,20 @@ class ApiClient {
     password: string;
     name: string;
   }) {
-    return this.request<{ data: { user: User; token: string } }>("/auth/register", {
+    const response = await this.request<{ user: User; tokens: { accessToken: string; refreshToken: string } }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    this.setToken(response.tokens.accessToken);
+    return response;
   }
 
   async login(email: string, password: string) {
-    const response = await this.request<{ data: { user: User; token: string } }>("/auth/login", {
+    const response = await this.request<{ user: User; tokens: { accessToken: string; refreshToken: string } }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(response.data.token);
+    this.setToken(response.tokens.accessToken);
     return response;
   }
 
@@ -94,16 +96,23 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    if (!this.token) return { data: null };
+    if (!this.token) return { user: null };
     try {
-      return await this.request<{ data: User }>("/auth/me");
+      return await this.request<{ user: User }>("/auth/me");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         this.setToken(null);
-        return { data: null };
+        return { user: null };
       }
       throw error;
     }
+  }
+
+  async updateProfile(data: { name?: string; phone?: string; university?: string; avatarUrl?: string }) {
+    return this.request<{ data: User }>("/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
   }
 
   // Categories
@@ -176,6 +185,16 @@ class ApiClient {
   }
 
   // Messages
+  async getMessageThreads(params?: { page?: number; pageSize?: number }) {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) query.append(key, String(value));
+      });
+    }
+    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/message-threads?${query}`);
+  }
+
   async getThreads(params?: { itemId?: string; page?: number; pageSize?: number }) {
     const query = new URLSearchParams();
     if (params) {
@@ -183,20 +202,27 @@ class ApiClient {
         if (value !== undefined) query.append(key, String(value));
       });
     }
-    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/messages?${query}`);
+    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/message-threads?${query}`);
   }
 
   async getMessages(threadId: string, params?: { page?: number; pageSize?: number }) {
-    const query = new URLSearchParams({ threadId });
+    const query = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) query.append(key, String(value));
       });
     }
-    return this.request<{ data: Message[]; meta: PaginationMeta }>(`/messages?${query}`);
+    return this.request<{ data: Message[]; meta: PaginationMeta }>(`/message-threads/${threadId}/messages?${query}`);
   }
 
-  async sendMessage(data: {
+  async sendMessage(threadId: string, body: string) {
+    return this.request<{ data: Message }>(`/message-threads/${threadId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    });
+  }
+
+  async sendMessageWithRecipient(data: {
     threadId?: string;
     itemId?: string;
     recipientId?: string;
@@ -235,6 +261,10 @@ class ApiClient {
       });
     }
     return this.request<{ data: Order[]; meta: PaginationMeta }>(`/orders?${query}`);
+  }
+
+  async getOrderById(orderId: string) {
+    return this.request<{ data: Order }>(`/orders/${orderId}`);
   }
 
   async updateOrderStatus(orderId: string, status: string) {

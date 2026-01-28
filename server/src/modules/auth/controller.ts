@@ -8,6 +8,7 @@ import {
   requestEmailVerification,
   requestPasswordReset,
   resetPassword,
+  updateUserProfile,
   verifyEmailToken
 } from "./service.js";
 
@@ -54,4 +55,9 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
 export const resetPasswordController = async (req: Request, res: Response) => {
   await resetPassword(req.body.token, req.body.password);
   res.status(204).send();
+};
+
+export const updateProfileController = async (req: Request, res: Response) => {
+  const user = await updateUserProfile(req.user!.id, req.body);
+  res.json({ data: user });
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart, Package } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { signOut } from '../lib/supabase';
@@ -9,15 +10,10 @@ interface HeaderProps {
   onSearch: (query: string) => void;
   onNewItem: () => void;
   onShowFavorites: () => void;
-  onNavigateToProfile: () => void;
-  onNavigateToAbout: () => void;
-  onNavigateToCart: () => void;
-  onNavigateToSell: () => void;
-  onNavigateToBuy: () => void;
-  onNavigateToDonation: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, onNavigateToProfile, onNavigateToAbout, onNavigateToCart, onNavigateToSell, onNavigateToBuy, onNavigateToDonation }) => {
+const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [allMenuOpen, setAllMenuOpen] = useState(false);
@@ -29,7 +25,10 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(searchQuery);
+    if (searchQuery.trim()) {
+      onSearch(searchQuery);
+      navigate(`/products?q=${encodeURIComponent(searchQuery)}`);
+    }
   };
 
   const handleSignOut = async () => {
@@ -55,13 +54,17 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
 
           {/* Search Bar - Desktop (center) */}
           <form onSubmit={handleSearch} className="hidden md:flex flex-1 items-center mx-6">
-            <div className="flex items-center gap-2 rounded-lg bg-[#6a8d6d] px-3 py-1.5 text-[#e8f2e4]">
+            <button
+              type="button"
+              onClick={() => navigate('/ai-recommendation')}
+              className="flex items-center gap-2 rounded-lg bg-[#6a8d6d] px-3 py-1.5 text-[#e8f2e4] hover:bg-[#5a7d5d] transition-colors cursor-pointer"
+            >
               <Sparkles className="h-4 w-4 text-[#e8f2e4]" fill="currentColor" />
               <div className="text-[10px] leading-tight">
                 <div className="font-semibold">AI Search</div>
                 <div className="text-[9px] opacity-90">Assistant</div>
               </div>
-            </div>
+            </button>
             <div className="ml-4 flex h-8 flex-1 items-stretch overflow-visible rounded-md border border-[#8db28d] bg-[#e6f0e1] relative">
               <div className="relative">
                 <button
@@ -159,10 +162,10 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
                 </div>
               )}
             </div>
-            <button onClick={onNavigateToProfile} className="hover:text-white">
+            <button onClick={() => navigate('/profile')} className="hover:text-white">
               Profile
             </button>
-            <button onClick={onNavigateToAbout} className="hover:text-white">
+            <button onClick={() => navigate('/about')} className="hover:text-white">
               About
             </button>
             <button
@@ -173,17 +176,44 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
               <Star className="h-4 w-4" fill="currentColor" />
             </button>
             <button
-              onClick={onNavigateToCart}
+              onClick={() => navigate('/cart')}
               className="p-1.5 text-[#e6f1e2] hover:text-white relative"
               aria-label={t('cart')}
             >
               <ShoppingCart className="h-4 w-4" fill="currentColor" />
               <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f0d27a]" />
             </button>
-            <button className="p-1.5 text-[#e6f1e2] hover:text-white relative" aria-label={t('messages')}>
-              <Bell className="h-4 w-4" fill="currentColor" />
+            <button
+              onClick={() => navigate('/orders')}
+              className="p-1.5 text-[#e6f1e2] hover:text-white"
+              aria-label="Orders"
+            >
+              <Package className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => navigate('/messages')}
+              className="p-1.5 text-[#e6f1e2] hover:text-white relative"
+              aria-label={t('messages')}
+            >
+              <MessageCircle className="h-4 w-4" fill="currentColor" />
               <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f27b7b]" />
             </button>
+            {!isAuthenticated && (
+              <>
+                <button
+                  onClick={() => openAuthModal('signin')}
+                  className="px-4 py-1.5 text-[#e6f1e2] hover:text-white border border-[#e6f1e2] rounded-md hover:bg-[#4d6f50] transition-colors"
+                >
+                  {t('signIn')}
+                </button>
+                <button
+                  onClick={() => openAuthModal('signup')}
+                  className="px-4 py-1.5 bg-[#6ea16f] text-white rounded-md hover:bg-[#5d8f5e] transition-colors"
+                >
+                  {t('signUp')}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -270,15 +300,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
       <div className="bg-[#d7ecd0] border-t border-b border-[#b4d3b1]">
         <div className="w-full">
           <div className="flex items-stretch">
-            <button onClick={onNavigateToBuy} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
+            <button onClick={() => navigate('/buy')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Start Buying
             </button>
             <div className="w-px bg-[#b4d3b1]" />
-            <button onClick={onNavigateToSell} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
+            <button onClick={() => navigate('/sell')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Sell Now
             </button>
             <div className="w-px bg-[#b4d3b1]" />
-            <button onClick={onNavigateToDonation} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
+            <button onClick={() => navigate('/donation')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
               Donation
             </button>
           </div>

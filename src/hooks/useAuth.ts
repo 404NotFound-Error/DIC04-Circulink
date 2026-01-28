@@ -37,9 +37,9 @@ export const useAuth = () => {
 
           // Try login
           const loginResult = await apiClient.login(email, password);
-          if (loginResult.data.user) {
-            setUser(loginResult.data.user);
-            const { data: profileData } = await getProfile(loginResult.data.user.id);
+          if (loginResult.user) {
+            setUser(loginResult.user);
+            const { data: profileData } = await getProfile(loginResult.user.id);
             setProfile(profileData);
           }
         } catch (error) {
@@ -54,9 +54,9 @@ export const useAuth = () => {
               (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
               (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123'
             );
-            if (loginResult.data.user) {
-              setUser(loginResult.data.user);
-              const { data: profileData } = await getProfile(loginResult.data.user.id);
+            if (loginResult.user) {
+              setUser(loginResult.user);
+              const { data: profileData } = await getProfile(loginResult.user.id);
               setProfile(profileData);
             }
           } catch {
@@ -74,10 +74,18 @@ export const useAuth = () => {
     // For now, we rely on initial load and explicit login/logout calls
   }, []);
 
+  const refreshProfile = async () => {
+    if (user) {
+      const { data: profileData } = await getProfile(user.id);
+      setProfile(profileData);
+    }
+  };
+
   return {
     user,
     profile,
     loading,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    refreshProfile
   };
 };

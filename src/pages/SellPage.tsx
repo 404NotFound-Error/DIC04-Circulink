@@ -1,10 +1,8 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface SellPageProps {
-  onNavigateBack?: () => void;
-}
-
-const SellPage: React.FC<SellPageProps> = ({ onNavigateBack }) => {
+const SellPage: React.FC = () => {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const openFileDialog = () => {
@@ -15,14 +13,12 @@ const SellPage: React.FC<SellPageProps> = ({ onNavigateBack }) => {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-sky-50 py-12">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-start mb-6">
-          {onNavigateBack && (
-            <button
-              onClick={onNavigateBack}
-              className="mr-6 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              Back
-            </button>
-          )}
+          <button
+            onClick={() => navigate('/')}
+            className="mr-6 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Back
+          </button>
         </div>
 
         <div className="mb-8">

@@ -1,7 +1,11 @@
-import { Condition, ItemStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
+
+// Define types as string constants since SQLite doesn't support enums
+type Condition = "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
+type ItemStatus = "DRAFT" | "ACTIVE" | "SOLD" | "ARCHIVED";
 
 export type ListItemsInput = {
   categoryId?: string;
@@ -27,18 +31,22 @@ export const listItems = async (filters: ListItemsInput) => {
   if (filters.status) where.status = filters.status;
   if (filters.q) {
     where.OR = [
-      { title: { contains: filters.q, mode: "insensitive" } },
-      { description: { contains: filters.q, mode: "insensitive" } }
+      { title: { contains: filters.q } },
+      { description: { contains: filters.q } }
     ];
   }
-  if (filters.minPrice || filters.maxPrice) {
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     where.price = {
-      gte: filters.minPrice !== undefined ? new Prisma.Decimal(filters.minPrice) : undefined,
-      lte: filters.maxPrice !== undefined ? new Prisma.Decimal(filters.maxPrice) : undefined
+      ...(filters.minPrice !== undefined && { gte: filters.minPrice }),
+      ...(filters.maxPrice !== undefined && { lte: filters.maxPrice })
     };
   }
 
-  const orderBy = filters.sort ? { [filters.sort]: filters.order ?? "desc" } : { createdAt: "desc" };
+  const orderBy: Prisma.ItemOrderByWithRelationInput = filters.sort 
+    ? (filters.sort === "price" 
+        ? { price: filters.order ?? "desc" } 
+        : { createdAt: filters.order ?? "desc" })
+    : { createdAt: "desc" };
 
   const [items, total] = await prisma.$transaction([
     prisma.item.findMany({
@@ -82,8 +90,13 @@ export type CreateItemInput = {
 export const createItem = async (sellerId: string, data: CreateItemInput) => {
   return prisma.item.create({
     data: {
-      ...data,
-      price: new Prisma.Decimal(data.price),
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      condition: data.condition,
+      status: data.status,
+      categoryId: data.categoryId,
+      images: JSON.stringify(data.images),
       sellerId
     }
   });
@@ -94,12 +107,19 @@ export const updateItem = async (id: string, userId: string, data: Partial<Creat
   if (!item) throw new NotFoundError("Item not found");
   if (item.sellerId !== userId) throw new ForbiddenError("Only the seller can update this item");
 
+  const updateData: Prisma.ItemUpdateInput = {
+    ...(data.title && { title: data.title }),
+    ...(data.description && { description: data.description }),
+    ...(data.price !== undefined && { price: data.price }),
+    ...(data.condition && { condition: data.condition }),
+    ...(data.status && { status: data.status }),
+    ...(data.categoryId && { categoryId: data.categoryId }),
+    ...(data.images && { images: JSON.stringify(data.images) })
+  };
+
   return prisma.item.update({
     where: { id },
-    data: {
-      ...data,
-      price: data.price !== undefined ? new Prisma.Decimal(data.price) : undefined
-    }
+    data: updateData
   });
 };
 

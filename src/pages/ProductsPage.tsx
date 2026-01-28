@@ -1,138 +1,285 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Loader, AlertCircle, ShoppingBag } from 'lucide-react';
+import Layout from '../components/Layout';
+import ProductGrid from '../components/ProductGrid';
+import { useLanguage } from '../context/LanguageContext';
+import { apiClient, Item } from '../lib/api';
 
-const sampleProducts = [
-  {
-    id: '1',
-    title: 'Academic Building Poster',
-    price: 9.5,
-    image: '../src/public/pic/ab_building.jpg',
-    condition: 'Like New',
-    location: 'Stanford, CA',
-    seller: 'John D.',
-    rating: 4.2,
-    reviewCount: 24
-  },
-  {
-    id: '2',
-    title: 'Campus Print',
-    price: 0,
-    image: '../src/public/pic/school.png',
-    condition: 'Excellent',
-    location: 'Suzhou',
-    seller: 'Sarah M.',
-    rating: 5.0,
-    reviewCount: 18
-  },
-  {
-    id: '3',
-    title: 'Group Photo Print',
-    price: 1,
-    image: '../src/public/pic/group.jpg',
-    condition: 'Excellent',
-    location: 'DKU',
-    seller: 'Max W.',
-    rating: 5.0,
-    reviewCount: 18
-  },
-];
+interface ListItemsParams {
+  categoryId?: string;
+  q?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  condition?: string;
+  status?: string;
+  sort?: string;
+  order?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 interface ProductsPageProps {
   searchQuery?: string;
-  onNavigateToCategory: (categoryName: string, products: any[]) => void;
 }
 
-const ProductsPage: React.FC<ProductsPageProps> = ({ onNavigateToCategory }) => {
-  const categoryRows = [
-    { title: 'Clothing', products: sampleProducts },
-    { title: 'Furnitures', products: sampleProducts },
-    { title: 'Electronics', products: sampleProducts },
-    { title: 'Office & Study Supplies', products: sampleProducts },
-    { title: 'Food & Snacks', products: sampleProducts },
-    { title: 'Daily Essentials', products: sampleProducts },
-    { title: 'Arts & Dec', products: sampleProducts }
-  ];
+const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { t } = useLanguage();
+
+  // State management
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState(
+    initialSearch || searchParams.get('q') || ''
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    searchParams.get('category') || null
+  );
+  const [minPrice, setMinPrice] = useState<number | null>(
+    searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : null
+  );
+  const [maxPrice, setMaxPrice] = useState<number | null>(
+    searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : null
+  );
+  const [condition, setCondition] = useState<string | null>(
+    searchParams.get('condition') || null
+  );
+  const [sortBy, setSortBy] = useState<string>(
+    searchParams.get('sort') || 'createdAt'
+  );
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
+    (searchParams.get('order') as 'asc' | 'desc') || 'desc'
+  );
+  const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
+  const pageSize = 12;
+
+  // Fetch items from API
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params: ListItemsParams = {
+          page,
+          pageSize,
+          sort: sortBy,
+          order: sortOrder,
+        };
+
+        if (searchQuery) params.q = searchQuery;
+        if (selectedCategory) params.categoryId = selectedCategory;
+        if (minPrice !== null) params.minPrice = minPrice;
+        if (maxPrice !== null) params.maxPrice = maxPrice;
+        if (condition) params.condition = condition;
+
+        const response = await apiClient.getItems(params);
+        setItems(response.data || []);
+        setTotalCount(response.meta?.total || 0);
+        console.log('✅ Items loaded:', response.data?.length || 0);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch items';
+        setError(errorMessage);
+        setItems([]);
+        console.error('❌ Error fetching items:', errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, [searchQuery, selectedCategory, minPrice, maxPrice, condition, sortBy, sortOrder, page]);
+
+  // Handle product click
+  const handleProductClick = (id: string) => {
+    navigate(`/product/${id}`);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#7fb58a] via-[#a4c6a5] to-[#d3f0c7]" style={{ fontFamily: '"Cormorant Garamond", "Garamond", serif' }}>
-      <section className="w-full overflow-hidden bg-gradient-to-b from-[#78b886] via-[#95c9a0] to-[#b5d9bb]">
-        <div className="relative h-56 sm:h-72">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_55%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.35),transparent_50%)]" />
-            <div className="absolute inset-0 opacity-30 bg-[linear-gradient(0deg,rgba(30,60,30,0.2),rgba(30,60,30,0))]" />
-            <div className="relative z-10 flex h-full items-center justify-center gap-6 px-6">
-              <div className="text-center">
-                <div className="text-4xl sm:text-6xl font-black tracking-[0.35em] text-[#1e3a28] drop-shadow-[0_2px_0_rgba(255,255,255,0.6)]">
-                  CIRCULINK
-                </div>
-                <div className="mt-2 text-[11px] sm:text-sm uppercase tracking-[0.4em] text-[#2f5a3a]">
-                  reuse. relove. recirculate.
-                </div>
+    <Layout>
+      <div className="w-full min-h-screen bg-gradient-to-b from-[#7fb58a] via-[#a4c6a5] to-[#d3f0c7]">
+        {/* Header with search info */}
+        {searchQuery && (
+          <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+            <p className="text-sm text-blue-800">
+              搜索结果: "<strong>{searchQuery}</strong>" ({totalCount} 件商品)
+            </p>
+          </div>
+        )}
+
+        {/* Filters and Controls */}
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Price Range */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  最低价格
+                </label>
+                <input
+                  type="number"
+                  value={minPrice ?? ''}
+                  onChange={(e) => {
+                    setMinPrice(e.target.value ? Number(e.target.value) : null);
+                    setPage(1);
+                  }}
+                  placeholder="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
+                />
               </div>
-              <div className="hidden sm:block">
-                <svg
-                  viewBox="0 0 220 160"
-                  className="h-32 w-44 text-[#1f5a33]"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  最高价格
+                </label>
+                <input
+                  type="number"
+                  value={maxPrice ?? ''}
+                  onChange={(e) => {
+                    setMaxPrice(e.target.value ? Number(e.target.value) : null);
+                    setPage(1);
+                  }}
+                  placeholder="999999"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
+                />
+              </div>
+
+              {/* Condition */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  商品状况
+                </label>
+                <select
+                  value={condition || ''}
+                  onChange={(e) => {
+                    setCondition(e.target.value || null);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
                 >
-                  <circle cx="62" cy="44" r="20" fill="#3b7a49" />
-                  <circle cx="90" cy="36" r="16" fill="#2f6d3f" />
-                  <circle cx="120" cy="50" r="18" fill="#4a8a56" />
-                  <rect x="104" y="20" width="20" height="28" rx="4" fill="#2a5b39" />
-                  <rect x="130" y="28" width="18" height="22" rx="3" fill="#2f6d3f" />
-                  <path
-                    d="M20 62h130l18 42H48L20 62Z"
-                    fill="#cfe5cd"
-                    stroke="#1f5a33"
-                    strokeWidth="6"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M40 62l-10-24" stroke="#1f5a33" strokeWidth="6" strokeLinecap="round" />
-                  <circle cx="70" cy="118" r="10" fill="#1f5a33" />
-                  <circle cx="150" cy="118" r="10" fill="#1f5a33" />
-                  <path
-                    d="M10 32h34"
-                    stroke="#1f5a33"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                  <option value="">全部</option>
+                  <option value="EXCELLENT">全新</option>
+                  <option value="GOOD">良好</option>
+                  <option value="FAIR">一般</option>
+                  <option value="POOR">需维修</option>
+                </select>
+              </div>
+
+              {/* Sort */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  排序方式
+                </label>
+                <select
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [sort, order] = e.target.value.split('-');
+                    setSortBy(sort);
+                    setSortOrder(order as 'asc' | 'desc');
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
+                >
+                  <option value="createdAt-desc">最新上架</option>
+                  <option value="price-asc">价格: 低到高</option>
+                  <option value="price-desc">价格: 高到低</option>
+                </select>
+              </div>
+
+              {/* Reset Filters */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setMinPrice(null);
+                    setMaxPrice(null);
+                    setCondition(null);
+                    setSortBy('createdAt');
+                    setSortOrder('desc');
+                    setPage(1);
+                  }}
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  重置筛选
+                </button>
               </div>
             </div>
           </div>
-      </section>
 
-      <div className="w-full px-3 pb-14 pt-6 space-y-4">
-        {categoryRows.map((category) => (
-          <section
-            key={category.title}
-            className="relative rounded-xl border border-[#9ec6a0] bg-[#dcead9] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_3px_0_rgba(120,160,120,0.35)]"
-          >
-            <div className="flex items-start justify-between px-6 pt-4">
-              <h3 className="text-sm sm:text-base font-semibold text-[#2e5235] font-[&quot;Cormorant_Garamond&quot;,serif]">
-                {category.title}
-              </h3>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader className="h-8 w-8 text-green-600 animate-spin mb-3" />
+              <p className="text-gray-600">加载中...</p>
             </div>
-            <div className="flex items-center justify-between px-6 pb-10 pt-4 min-h-[180px]">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={`${category.title}-${index}`} className="flex flex-col items-center">
-                  <div className="h-20 w-20 rounded-lg border border-[#b6cbb4] bg-[#d6e3d7] shadow-[inset_0_2px_3px_rgba(0,0,0,0.08)]" />
-                  <div className="mt-2 flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#8fba5a]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#d7f08f]" />
-                  </div>
-                </div>
-              ))}
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-red-800">加载失败</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
             </div>
-            <button
-              onClick={() => onNavigateToCategory(category.title, category.products)}
-              className="absolute bottom-2 right-5 rounded-full border border-[#8eb78c] bg-[#eaf4e4] px-4 py-1.5 text-[10px] font-semibold text-[#3b6b44] shadow-[0_2px_0_rgba(60,100,60,0.25)] transition hover:bg-[#e3f0dc] font-[&quot;Cormorant_Garamond&quot;,serif]"
-            >
-              View All
-            </button>
-          </section>
-        ))}
+          )}
+
+          {/* Empty State */}
+          {!loading && items.length === 0 && !error && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <ShoppingBag className="h-12 w-12 text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium text-gray-700">未找到商品</h3>
+              <p className="text-gray-500 mt-1 text-sm">
+                {searchQuery
+                  ? `没有找到与"${searchQuery}"匹配的商品`
+                  : '暂时没有可用商品'}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  清除搜索
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Products Grid */}
+          {!loading && items.length > 0 && (
+            <>
+              <ProductGrid products={items} onProductClick={handleProductClick} />
+
+              {/* Pagination */}
+              <div className="flex items-center justify-center gap-2 mt-8 mb-8">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  上一页
+                </button>
+                <span className="text-sm text-gray-600">
+                  第 {page} 页，共 {Math.ceil(totalCount / pageSize)} 页
+                </span>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= Math.ceil(totalCount / pageSize)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  下一页
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

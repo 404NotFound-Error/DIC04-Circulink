@@ -1,11 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface DonationPageProps {
-  onNavigateBack?: () => void;
-  onStartDonating?: () => void;
-}
-
-const DonationPage: React.FC<DonationPageProps> = ({ onNavigateBack, onStartDonating }) => {
+const DonationPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-sky-50 py-12">
       <div className="max-w-6xl mx-auto px-6">
@@ -30,7 +27,7 @@ const DonationPage: React.FC<DonationPageProps> = ({ onNavigateBack, onStartDona
 
         <div className="flex justify-center">
           <button
-            onClick={() => onStartDonating ? onStartDonating() : null}
+            onClick={() => navigate('/donation/form')}
             className="bg-emerald-200 hover:bg-emerald-300 text-emerald-900 font-semibold rounded-full px-8 py-4 shadow-md"
           >
             Start Donating →

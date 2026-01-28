@@ -1,48 +1,63 @@
-import React, { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
+import { apiClient, Item } from '../lib/api';
 
-interface Product {
-  id: string;
-  title: string;
-  price: number | string;
-  image: string;
-  condition?: string;
-  location?: string;
-  seller?: string;
-  rating?: number;
-  reviewCount?: number;
-  isFavorite?: boolean;
+interface ListItemsParams {
+  categoryId?: string;
+  sort?: string;
+  order?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-interface CategoryPageProps {
-  categoryName: string;
-  products: Product[];
-  onNavigateBack: () => void;
-}
+const CategoryPage: React.FC = () => {
+  const { categoryName } = useParams<{ categoryName: string }>();
+  const navigate = useNavigate();
 
-const CategoryPage: React.FC<CategoryPageProps> = ({ categoryName, products, onNavigateBack }) => {
-  const [sortBy, setSortBy] = useState<string>('relevant');
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  // State
+  const [products, setProducts] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
-  const handleSortChange = (sort: string) => {
-    setSortBy(sort);
-    const sorted = [...products];
+  // Fetch items for this category
+  useEffect(() => {
+    const fetchCategoryItems = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // In a real scenario, we'd get the categoryId from a category list
+        // For now, use the category name as a rough identifier
+        const params: ListItemsParams = {
+          page,
+          pageSize,
+          sort: sortBy,
+          order: sortOrder,
+        };
 
-    switch (sort) {
-      case 'price-low':
-        sorted.sort((a, b) => Number(a.price) - Number(b.price));
-        break;
-      case 'price-high':
-        sorted.sort((a, b) => Number(b.price) - Number(a.price));
-        break;
-      case 'rating':
-        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-      default:
-        break;
+        const response = await apiClient.getItems(params);
+        setProducts(response.data || []);
+        setTotalCount(response.meta?.total || 0);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch items');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (categoryName) {
+      fetchCategoryItems();
     }
+  }, [categoryName, page, sortBy, sortOrder]);
 
-    setFilteredProducts(sorted);
+  const handleNavigateBack = () => {
+    navigate('/');
   };
 
   return (
@@ -50,7 +65,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ categoryName, products, onN
       {/* Back Button and Title */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <button
-          onClick={onNavigateBack}
+          onClick={handleNavigateBack}
           className="flex items-center text-gray-700 hover:text-gray-900 mb-6 transition-colors"
           aria-label="Go back"
         >
@@ -61,65 +76,144 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ categoryName, products, onN
         {/* Category Header with Title and Filters */}
         <div className="bg-white rounded-3xl p-8 mb-8 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-4xl md:text-5xl font-bold text-green-800">{categoryName.toUpperCase()}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-green-800">
+              {(categoryName || '').toUpperCase()}
+            </h1>
             <div className="flex gap-4">
               <div className="relative">
                 <select
-                  value={sortBy}
-                  onChange={(e) => handleSortChange(e.target.value)}
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [sort, order] = e.target.value.split('-');
+                    setSortBy(sort);
+                    setSortOrder(order as 'asc' | 'desc');
+                    setPage(1);
+                  }}
                   className="appearance-none px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:border-gray-400 focus:outline-none focus:border-green-500"
                 >
-                  <option value="relevant">Sort By</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Rating</option>
-                </select>
-              </div>
-              <div className="relative">
-                <select className="appearance-none px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:border-gray-400 focus:outline-none focus:border-green-500">
-                  <option>Price</option>
-                  <option>Under $10</option>
-                  <option>$10 - $50</option>
-                  <option>$50 - $100</option>
-                  <option>Over $100</option>
+                  <option value="createdAt-desc">最新上架</option>
+                  <option value="price-asc">价格: 低到高</option>
+                  <option value="price-desc">价格: 高到低</option>
                 </select>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-              {/* Image Container */}
-              <div className="aspect-square bg-gray-100 relative overflow-hidden flex-shrink-0">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                {/* Favorite Star */}
-                <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow">
-                  <svg
-                    className={`w-6 h-6 ${product.isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}`}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    fill={product.isFavorite ? 'currentColor' : 'none'}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </button>
-              </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader className="h-8 w-8 text-green-600 animate-spin mb-3" />
+            <p className="text-gray-600">加载中...</p>
+          </div>
+        )}
 
-              {/* Product Info */}
-              <div className="p-4">
-                <h3 className="text-gray-900 font-medium text-sm truncate">{product.title}</h3>
-                <p className="text-gray-700 font-bold mt-2">${product.price}</p>
-              </div>
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-red-800">加载失败</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && products.length === 0 && !error && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <ShoppingBag className="h-12 w-12 text-gray-400 mb-3" />
+            <h3 className="text-lg font-medium text-gray-700">未找到商品</h3>
+            <p className="text-gray-500 mt-1 text-sm">该分类暂时没有可用商品</p>
+            <button
+              onClick={handleNavigateBack}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+            >
+              返回首页
+            </button>
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {!loading && products.length > 0 && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                  onClick={() => navigate(`/product/${product.id}`)}
+                >
+                  {/* Image Container */}
+                  <div className="aspect-square bg-gray-100 relative overflow-hidden flex-shrink-0">
+                    <img
+                      src={
+                        typeof product.images === 'string'
+                          ? (() => {
+                              try {
+                                const parsed = JSON.parse(product.images);
+                                return Array.isArray(parsed) ? parsed[0] : product.images;
+                              } catch {
+                                return product.images || 'https://via.placeholder.com/300';
+                              }
+                            })()
+                          : (product.images?.[0] || 'https://via.placeholder.com/300')
+                      }
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {/* Favorite Star */}
+                    <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow">
+                      <svg
+                        className="w-6 h-6 text-gray-400"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        fill="none"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="p-4">
+                    <h3 className="text-gray-900 font-medium text-sm truncate">{product.title}</h3>
+                    <p className="text-gray-700 font-bold mt-2">${product.price}</p>
+                    {product.condition && (
+                      <p className="text-gray-500 text-xs mt-1">{product.condition}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-center gap-2 mt-8 mb-8">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                上一页
+              </button>
+              <span className="text-sm text-gray-600">
+                第 {page} 页，共 {Math.ceil(totalCount / pageSize)} 页
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                下一页
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
