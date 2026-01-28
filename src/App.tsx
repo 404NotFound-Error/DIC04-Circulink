@@ -10,6 +10,7 @@ import AboutPage from './pages/AboutPage';
 import CartPage from './pages/CartPage';
 import CategoryPage from './pages/CategoryPage';
 import SellPage from './pages/SellPage';
+import SellReviewPage from './pages/SellReviewPage';
 import BuyPage from './pages/BuyPage';
 import DonationPage from './pages/DonationPage';
 import DonationFormPage from './pages/DonationFormPage';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/category/:categoryName" element={<CategoryPage />} />
           <Route path="/sell" element={<SellPage />} />
+          <Route path="/sell/review" element={<SellReviewPage />} />
           <Route path="/buy" element={<BuyPage />} />
           <Route path="/donation" element={<DonationPage />} />
           <Route path="/donation/form" element={<DonationFormPage />} />

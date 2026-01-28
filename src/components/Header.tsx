@@ -78,34 +78,76 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                 {allMenuOpen && (
                   <div className="absolute left-0 top-10 w-48 rounded-md bg-[#f3faf0] shadow-[0_12px_24px_-12px_rgba(0,0,0,0.45)] border border-[#c8ddc3] text-[#2f4b32] text-[10px]">
                     <div className="px-3 py-2 space-y-1">
-                      <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          navigate('/category/clothing');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Clothing
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/furniture');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Furniture
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/electronics');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Electronics
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/office-supplies');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Office &amp; Study Supplies
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/food-snacks');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Food &amp; Snacks
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/daily-essentials');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Daily Essentials
-                      </div>
-                      <div className="flex items-center gap-2">
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/category/art-decor');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
                         Art &amp; Decor
-                      </div>
+                      </button>
                     </div>
                   </div>
                 )}

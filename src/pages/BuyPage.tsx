@@ -1,17 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
+import { Item } from '../lib/api';
 
-const sampleProducts = Array.from({ length: 8 }).map((_, i) => ({
+const sampleProducts: Item[] = Array.from({ length: 8 }).map((_, i) => ({
   id: `p-${i + 1}`,
-  title: `title1`,
-  price: 20,
-  image: `https://via.placeholder.com/600x600?text=Item+${i + 1}`,
-  condition: 'good',
-  location: 'Campus',
-  seller: 'Seller',
-  rating: 4,
-  reviewCount: 12,
+  title: `Sample Product ${i + 1}`,
+  description: 'A sample product for demonstration',
+  price: `${20 * (i + 1)}`,
+  condition: 'GOOD',
+  status: 'available',
+  categoryId: 'cat-1',
+  sellerId: 'seller-1',
+  images: [`https://via.placeholder.com/600x600?text=Item+${i + 1}`],
+  category: { id: 'cat-1', name: 'Electronics', slug: 'electronics', createdAt: new Date().toISOString() },
+  seller: { id: 'seller-1', email: 'seller@example.com', name: 'Sample Seller' },
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 }));
 
 const BuyPage: React.FC = () => {

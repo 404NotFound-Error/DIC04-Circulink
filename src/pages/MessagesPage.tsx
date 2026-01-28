@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Loader, AlertCircle, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient } from '../lib/api';
+import { apiClient, MessageThread } from '../lib/api';
 
 interface Message {
   id: string;
@@ -12,9 +12,17 @@ interface Message {
   isUser?: boolean;
 }
 
+interface ThreadDisplay {
+  id: string;
+  participantName: string;
+  lastMessage: string;
+  unreadCount: number;
+  lastMessageTime?: string;
+}
+
 const MessagesPage: React.FC = () => {
   const { user } = useAuth();
-  const [threads, setThreads] = useState<any[]>([]);
+  const [threads, setThreads] = useState<ThreadDisplay[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -30,11 +38,29 @@ const MessagesPage: React.FC = () => {
   }, []);
 
   // Load messages for selected thread
+  const loadMessages = useCallback(async (threadId: string) => {
+    try {
+      const response = await apiClient.getMessages(threadId);
+      console.log('Messages response:', response);
+      
+      const messageList = (response.data || []).map((msg: Message, index: number) => ({
+        ...msg,
+        content: msg.body || msg.content || '',
+        isUser: msg.senderId === user?.id || index % 2 === 0 // Fallback for demo
+      }));
+      
+      setMessages(messageList);
+    } catch (err) {
+      console.error('Load messages error:', err);
+      // Don't set error state for messages, just log it
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (selectedThreadId) {
       loadMessages(selectedThreadId);
     }
-  }, [selectedThreadId]);
+  }, [selectedThreadId, loadMessages]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -51,11 +77,12 @@ const MessagesPage: React.FC = () => {
       const threadList = response.data || [];
       
       // Transform threads to include participant names
-      const transformedThreads = threadList.map((thread: any) => ({
-        ...thread,
-        participantName: thread.participantName || `User ${thread.id.slice(0, 8)}`,
+      const transformedThreads: ThreadDisplay[] = threadList.map((thread: MessageThread) => ({
+        id: thread.id,
+        participantName: thread.item?.title || `Thread ${thread.id.slice(0, 8)}`,
         lastMessage: thread.lastMessage?.body || 'No messages yet',
-        unreadCount: thread.unreadCount || 0
+        unreadCount: thread.unreadCount || 0,
+        lastMessageTime: thread.lastMessage?.createdAt
       }));
       
       setThreads(transformedThreads);
@@ -69,24 +96,6 @@ const MessagesPage: React.FC = () => {
       console.error('Load threads error:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadMessages = async (threadId: string) => {
-    try {
-      const response = await apiClient.getMessages(threadId);
-      console.log('Messages response:', response);
-      
-      const messageList = (response.data || []).map((msg: any, index: number) => ({
-        ...msg,
-        content: msg.body || msg.content || '',
-        isUser: msg.senderId === user?.id || index % 2 === 0 // Fallback for demo
-      }));
-      
-      setMessages(messageList);
-    } catch (err) {
-      console.error('Load messages error:', err);
-      // Don't set error state for messages, just log it
     }
   };
 
@@ -108,7 +117,7 @@ const MessagesPage: React.FC = () => {
     }
   };
 
-  const filteredThreads = threads.filter((thread: any) =>
+  const filteredThreads = threads.filter((thread) =>
     (thread.participantName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -153,7 +162,7 @@ const MessagesPage: React.FC = () => {
             </div>
           ) : (
             <div className="p-2">
-              {filteredThreads.map((thread: any) => (
+              {filteredThreads.map((thread) => (
                 <button
                   key={thread.id}
                   onClick={() => setSelectedThreadId(thread.id)}

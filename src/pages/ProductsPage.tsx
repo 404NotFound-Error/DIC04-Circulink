@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader, AlertCircle, ShoppingBag } from 'lucide-react';
 import Layout from '../components/Layout';
 import ProductGrid from '../components/ProductGrid';
-import { useLanguage } from '../context/LanguageContext';
 import { apiClient, Item } from '../lib/api';
 
 interface ListItemsParams {
@@ -26,7 +25,6 @@ interface ProductsPageProps {
 const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useLanguage();
 
   // State management
   const [items, setItems] = useState<Item[]>([]);
@@ -37,9 +35,6 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
   // Filter state
   const [searchQuery, setSearchQuery] = useState(
     initialSearch || searchParams.get('q') || ''
-  );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    searchParams.get('category') || null
   );
   const [minPrice, setMinPrice] = useState<number | null>(
     searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : null
@@ -73,7 +68,6 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
         };
 
         if (searchQuery) params.q = searchQuery;
-        if (selectedCategory) params.categoryId = selectedCategory;
         if (minPrice !== null) params.minPrice = minPrice;
         if (maxPrice !== null) params.maxPrice = maxPrice;
         if (condition) params.condition = condition;
@@ -93,7 +87,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
     };
 
     fetchItems();
-  }, [searchQuery, selectedCategory, minPrice, maxPrice, condition, sortBy, sortOrder, page]);
+  }, [searchQuery, minPrice, maxPrice, condition, sortBy, sortOrder, page]);
 
   // Handle product click
   const handleProductClick = (id: string) => {
