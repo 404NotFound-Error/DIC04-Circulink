@@ -1,4 +1,20 @@
-import { apiClient, ApiError, User } from './api';
+import { apiClient, ApiError } from './api';
+import type { CreateItemInput } from './api';
+
+type ProfileUpdates = Partial<{
+  full_name: string;
+  university: string;
+  phone: string | null;
+  avatar_url: string | null;
+}>;
+
+const emitAuthChange = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth:change'));
+  }
+};
+
+const AUTO_LOGIN_DISABLED_KEY = 'circulink.disableAutoLogin';
 
 // Auth helpers (migrated from Supabase to Express API)
 export const signUp = async (email: string, password: string, userData: {
@@ -12,7 +28,9 @@ export const signUp = async (email: string, password: string, userData: {
       password,
       name: userData.full_name
     });
-    return { data: response.data, error: null };
+    localStorage.removeItem(AUTO_LOGIN_DISABLED_KEY);
+    emitAuthChange();
+    return { data: response, error: null };
   } catch (error) {
     return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -21,7 +39,9 @@ export const signUp = async (email: string, password: string, userData: {
 export const signIn = async (email: string, password: string) => {
   try {
     const response = await apiClient.login(email, password);
-    return { data: response.data, error: null };
+    localStorage.removeItem(AUTO_LOGIN_DISABLED_KEY);
+    emitAuthChange();
+    return { data: response, error: null };
   } catch (error) {
     return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -49,7 +69,7 @@ export const createAndSignInTestUser = async () => {
   const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
 
   // Try signing in first
-  let { data, error } = await signIn(email, password);
+  const { data, error } = await signIn(email, password);
   if (!error) return { data, error: null };
 
   // If sign-in failed, attempt to sign up the user
@@ -71,6 +91,8 @@ export const createAndSignInTestUser = async () => {
 export const signOut = async () => {
   try {
     await apiClient.logout();
+    localStorage.setItem(AUTO_LOGIN_DISABLED_KEY, 'true');
+    emitAuthChange();
     return { error: null };
   } catch (error) {
     return { error: error instanceof ApiError ? error : new Error(String(error)) };
@@ -80,7 +102,7 @@ export const signOut = async () => {
 export const getCurrentUser = async () => {
   try {
     const response = await apiClient.getCurrentUser();
-    return { user: response.data, error: null };
+    return { user: response.user, error: null };
   } catch (error) {
     return { user: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -112,7 +134,7 @@ export const getProfile = async (userId: string) => {
   }
 };
 
-export const updateProfile = async (userId: string, updates: any) => {
+export const updateProfile = async (userId: string, updates: ProfileUpdates) => {
   // Backend doesn't support profile updates yet - return success for now
   return { data: { id: userId, ...updates }, error: null };
 };
@@ -150,7 +172,7 @@ export const getItem = async (itemId: string) => {
   }
 };
 
-export const createItem = async (itemData: any) => {
+export const createItem = async (itemData: CreateItemInput) => {
   try {
     const response = await apiClient.createItem(itemData);
     return { data: response.data, error: null };
@@ -159,7 +181,7 @@ export const createItem = async (itemData: any) => {
   }
 };
 
-export const updateItem = async (itemId: string, updates: any) => {
+export const updateItem = async (itemId: string, updates: Partial<CreateItemInput>) => {
   try {
     const response = await apiClient.updateItem(itemId, updates);
     return { data: response.data, error: null };
@@ -188,7 +210,8 @@ export const getCategories = async () => {
 };
 
 // Favorites helpers
-export const getFavorites = async (userId: string) => {
+export const getFavorites = async (_userId: string) => {
+  void _userId;
   try {
     const response = await apiClient.getFavorites();
     return { data: response.data, error: null };
@@ -197,7 +220,7 @@ export const getFavorites = async (userId: string) => {
   }
 };
 
-export const addToFavorites = async (userId: string, itemId: string) => {
+export const addToFavorites = async (_userId: string, itemId: string) => {
   try {
     const response = await apiClient.addFavorite(itemId);
     return { data: response.data, error: null };
@@ -210,7 +233,7 @@ export const removeFromFavorites = async (userId: string, itemId: string) => {
   try {
     // Get favorites to find favorite ID
     const favs = await apiClient.getFavorites();
-    const favorite = favs.data.find(f => f.itemId === itemId && f.userId === userId);
+    const favorite = favs.data.find((f) => f.itemId === itemId && f.userId === userId);
     if (favorite) {
       await apiClient.removeFavorite(favorite.id);
     }
@@ -221,7 +244,7 @@ export const removeFromFavorites = async (userId: string, itemId: string) => {
 };
 
 // Messages helpers
-export const getMessages = async (userId: string, itemId?: string) => {
+export const getMessages = async (_userId: string, itemId?: string) => {
   try {
     const response = await apiClient.getThreads({ itemId });
     return { data: response.data, error: null };

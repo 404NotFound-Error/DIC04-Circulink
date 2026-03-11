@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Star, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { getFavorites, addToFavorites, removeFromFavorites } from '../lib/supabase';
+import { getFavorites, addToFavorites, removeFromFavorites } from '../lib/backend';
+import type { Favorite } from '../lib/api';
 
 interface Product {
   id: string;
@@ -32,8 +33,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
       const { data } = await getFavorites(user.id);
       if (data) {
         const map: Record<string, boolean> = {};
-        data.forEach((f: any) => {
-          if (f.item && f.item.id) map[f.item.id] = true;
+        (data as Favorite[]).forEach((f) => {
+          if (f.item?.id) map[f.item.id] = true;
         });
         setFavoritesSet(map);
       }

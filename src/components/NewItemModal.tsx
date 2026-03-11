@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Upload } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
 
 interface NewItemModalProps {
   isOpen: boolean;
@@ -8,7 +7,6 @@ interface NewItemModalProps {
 }
 
 const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');

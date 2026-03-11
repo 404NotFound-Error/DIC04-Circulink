@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, MapPin, Phone } from 'lucide-react';
-import { signIn, signUp } from '../lib/supabase';
+import { signIn, signUp } from '../lib/backend';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -46,8 +46,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         university: '',
         phone: ''
       });
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { OrderStatus } from "@prisma/client";
 import { createOrder, listOrders, updateOrderStatus } from "./service.js";
 
 export const createOrderController = async (req: Request, res: Response) => {
@@ -7,9 +8,12 @@ export const createOrderController = async (req: Request, res: Response) => {
 };
 
 export const listOrdersController = async (req: Request, res: Response) => {
+  const role = req.query.role as "buyer" | "seller" | undefined;
+  const status = req.query.status as OrderStatus | undefined;
+
   const result = await listOrders(req.user!.id, {
-    role: req.query.role as any,
-    status: req.query.status as any,
+    role,
+    status,
     page: req.query.page ? Number(req.query.page) : undefined,
     pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined
   });

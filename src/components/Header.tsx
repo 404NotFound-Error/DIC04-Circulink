@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart } from 'lucide-react';
+import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart, Heart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { signOut } from '../lib/supabase';
+import { signOut } from '../lib/backend';
 import AuthModal from './AuthModal';
 
 interface HeaderProps {
@@ -159,9 +159,25 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites, o
                 </div>
               )}
             </div>
-            <button onClick={onNavigateToProfile} className="hover:text-white">
-              Profile
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button onClick={onNavigateToProfile} className="hover:text-white">
+                  Profile
+                </button>
+                <button onClick={handleSignOut} className="hover:text-white">
+                  {t('signOut')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => openAuthModal('signin')} className="hover:text-white">
+                  {t('signIn')}
+                </button>
+                <button onClick={() => openAuthModal('signup')} className="rounded-full bg-[#6ea16f] px-3 py-1 text-white hover:bg-[#7ab27c]">
+                  {t('signUp')}
+                </button>
+              </>
+            )}
             <button onClick={onNavigateToAbout} className="hover:text-white">
               About
             </button>

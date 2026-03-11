@@ -1,11 +1,13 @@
 import React from 'react';
-import { Heart, Eye, MapPin, Star } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { addToFavorites, removeFromFavorites } from '../lib/supabase';
+import { addToFavorites, removeFromFavorites } from '../lib/backend';
+import { resolveAssetUrl } from '../lib/api';
+import type { Item } from '../lib/api';
 
 interface ItemCardProps {
-  item: any;
-  onItemClick: (item: any) => void;
+  item: Item;
+  onItemClick: (item: Item) => void;
   isFavorited?: boolean;
   onFavoriteChange?: () => void;
 }
@@ -14,11 +16,20 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
   const { user, isAuthenticated } = useAuth();
 
   const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case 'excellent': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
-      case 'fair': return 'text-yellow-600 bg-yellow-100';
-      case 'poor': return 'text-red-600 bg-red-100';
+    const normalized = condition.toLowerCase();
+    switch (normalized) {
+      case 'new':
+        return 'text-green-700 bg-green-100';
+      case 'like_new':
+      case 'like-new':
+      case 'excellent':
+        return 'text-green-600 bg-green-100';
+      case 'good':
+        return 'text-blue-600 bg-blue-100';
+      case 'fair':
+        return 'text-yellow-700 bg-yellow-100';
+      case 'poor':
+        return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -26,11 +37,12 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
+    if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
 
@@ -50,6 +62,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
     }
   };
 
+  const fallbackImage = new URL('../public/pic/school.png', import.meta.url).href;
+  const imageSrc = resolveAssetUrl(item.images?.[0]) || fallbackImage;
+  const sellerName = item.seller?.name ?? item.seller?.email ?? 'Unknown seller';
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-all duration-300 cursor-pointer group"
@@ -57,7 +73,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
     >
       <div className="relative">
         <img
-          src={item.images[0]}
+          src={imageSrc}
           alt={item.title}
           className="w-full h-48 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-300"
         />
@@ -73,7 +89,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
           <Heart className={`h-4 w-4 ${isFavorited ? 'text-red-500 fill-current' : 'text-gray-600 hover:text-red-500'}`} />
         </button>
         <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(item.condition)}`}>
-          {item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
+          {item.condition}
         </div>
       </div>
 
@@ -85,39 +101,16 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onItemClick, isFavorited = fa
         
         <div className="flex items-center space-x-2 mb-3">
           <img
-            src={item.seller?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller?.full_name || 'User')}&background=3B82F6&color=fff`}
-            alt={item.seller?.full_name}
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=3B82F6&color=fff`}
+            alt={sellerName}
             className="w-6 h-6 rounded-full"
           />
-          <span className="text-sm text-gray-600">{item.seller?.full_name}</span>
-          <span className="text-xs text-gray-500">{item.seller?.university}</span>
+          <span className="text-sm text-gray-600">{sellerName}</span>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-          <div className="flex items-center space-x-1">
-            <MapPin className="h-3 w-3" />
-            <span>{item.location}</span>
-          </div>
-          <span>{formatDate(item.created_at)}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 text-xs text-gray-500">
-            <div className="flex items-center space-x-1">
-              <Eye className="h-3 w-3" />
-              <span>{item.views}</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {item.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span className="text-xs">{item.category?.name}</span>
+          <span className="text-xs">{formatDate(item.createdAt)}</span>
         </div>
       </div>
     </div>

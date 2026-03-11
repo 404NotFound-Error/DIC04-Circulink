@@ -1,56 +1,111 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getCategories, getItems } from '../lib/backend';
+import { resolveAssetUrl } from '../lib/api';
+import type { Category, Item } from '../lib/api';
 
-const sampleProducts = [
-  {
-    id: '1',
-    title: 'Academic Building Poster',
-    price: 9.5,
-    image: '../src/public/pic/ab_building.jpg',
-    condition: 'Like New',
-    location: 'Stanford, CA',
-    seller: 'John D.',
-    rating: 4.2,
-    reviewCount: 24
-  },
-  {
-    id: '2',
-    title: 'Campus Print',
-    price: 0,
-    image: '../src/public/pic/school.png',
-    condition: 'Excellent',
-    location: 'Suzhou',
-    seller: 'Sarah M.',
-    rating: 5.0,
-    reviewCount: 18
-  },
-  {
-    id: '3',
-    title: 'Group Photo Print',
-    price: 1,
-    image: '../src/public/pic/group.jpg',
-    condition: 'Excellent',
-    location: 'DKU',
-    seller: 'Max W.',
-    rating: 5.0,
-    reviewCount: 18
-  },
-];
+const FALLBACK_IMAGE = new URL('../public/pic/school.png', import.meta.url).href;
+
+interface Product {
+  id: string;
+  title: string;
+  price: number | string;
+  image: string;
+  condition?: string;
+  location?: string;
+  seller?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+interface CategoryRow {
+  id: string;
+  title: string;
+  products: Product[];
+}
 
 interface ProductsPageProps {
   searchQuery?: string;
-  onNavigateToCategory: (categoryName: string, products: any[]) => void;
+  onNavigateToCategory: (categoryName: string, products: Product[]) => void;
 }
 
-const ProductsPage: React.FC<ProductsPageProps> = ({ onNavigateToCategory }) => {
-  const categoryRows = [
-    { title: 'Clothing', products: sampleProducts },
-    { title: 'Furnitures', products: sampleProducts },
-    { title: 'Electronics', products: sampleProducts },
-    { title: 'Office & Study Supplies', products: sampleProducts },
-    { title: 'Food & Snacks', products: sampleProducts },
-    { title: 'Daily Essentials', products: sampleProducts },
-    { title: 'Arts & Dec', products: sampleProducts }
-  ];
+const ProductsPage: React.FC<ProductsPageProps> = ({ onNavigateToCategory, searchQuery }) => {
+  const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+
+      const { data: categories, error: categoriesError } = await getCategories();
+      if (!active) return;
+      if (categoriesError || !categories) {
+        setError(categoriesError?.message || 'Failed to load categories');
+        setLoading(false);
+        return;
+      }
+
+      const normalizedQuery = (searchQuery || '').trim();
+      if (normalizedQuery) {
+        const { data: items, error: itemsError } = await getItems({ search: normalizedQuery });
+        if (!active) return;
+        if (itemsError || !items) {
+          setError(itemsError?.message || 'Failed to load items');
+          setLoading(false);
+          return;
+        }
+        const products = (items || []).map((item: Item) => ({
+          id: item.id,
+          title: item.title,
+          price: Number(item.price || 0),
+          image: resolveAssetUrl(item.images?.[0]) || FALLBACK_IMAGE,
+          condition: item.condition
+        }));
+        setCategoryRows([
+          {
+            id: 'search',
+            title: `Search results for "${normalizedQuery}"`,
+            products
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      const rows = await Promise.all(
+        categories.map(async (category: Category) => {
+          const { data: items } = await getItems({ category: category.id });
+          const products = (items || []).map((item: Item) => ({
+            id: item.id,
+            title: item.title,
+            price: Number(item.price || 0),
+            image: resolveAssetUrl(item.images?.[0]) || FALLBACK_IMAGE,
+            condition: item.condition
+          }));
+          return {
+            id: category.id,
+            title: category.name,
+            products
+          } as CategoryRow;
+        })
+      );
+
+      if (!active) return;
+      setCategoryRows(rows);
+      setLoading(false);
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [searchQuery]);
+
+  const hasResults = useMemo(() => categoryRows.some((row) => row.products.length > 0), [categoryRows]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#7fb58a] via-[#a4c6a5] to-[#d3f0c7]" style={{ fontFamily: '"Cormorant Garamond", "Garamond", serif' }}>
@@ -102,9 +157,59 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ onNavigateToCategory }) => 
       </section>
 
       <div className="w-full px-3 pb-14 pt-6 space-y-4">
-        {categoryRows.map((category) => (
+        {loading && (
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <section
+                key={`loading-${index}`}
+                className="relative rounded-xl border border-[#9ec6a0] bg-[#dcead9] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_3px_0_rgba(120,160,120,0.35)]"
+              >
+                <div className="px-6 pt-4">
+                  <div className="h-3 w-36 rounded-full bg-[#c4d7c2] animate-pulse" />
+                </div>
+                <div className="flex items-center justify-between px-6 pb-10 pt-4 min-h-[180px]">
+                  {Array.from({ length: 5 }).map((__, i) => (
+                    <div key={`loading-${index}-${i}`} className="flex flex-col items-center">
+                      <div className="h-20 w-20 rounded-lg border border-[#b6cbb4] bg-[#cdddc9] animate-pulse" />
+                      <div className="mt-2 flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#8fba5a]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#d7f08f]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center text-red-700">
+            <div className="text-sm font-semibold">Failed to load items</div>
+            <div className="mt-2 text-xs opacity-80">{error}</div>
+            <button
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                setCategoryRows([]);
+              }}
+              className="mt-4 rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && !hasResults && (
+          <div className="rounded-xl border border-[#9ec6a0] bg-[#eaf4e4] px-6 py-8 text-center text-[#2e5235]">
+            <div className="text-sm font-semibold">No items found</div>
+            <div className="mt-2 text-xs opacity-80">Try another search or check back later.</div>
+          </div>
+        )}
+
+        {!loading && !error && categoryRows.map((category) => (
           <section
-            key={category.title}
+            key={category.id}
             className="relative rounded-xl border border-[#9ec6a0] bg-[#dcead9] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_3px_0_rgba(120,160,120,0.35)]"
           >
             <div className="flex items-start justify-between px-6 pt-4">
@@ -113,9 +218,15 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ onNavigateToCategory }) => 
               </h3>
             </div>
             <div className="flex items-center justify-between px-6 pb-10 pt-4 min-h-[180px]">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={`${category.title}-${index}`} className="flex flex-col items-center">
-                  <div className="h-20 w-20 rounded-lg border border-[#b6cbb4] bg-[#d6e3d7] shadow-[inset_0_2px_3px_rgba(0,0,0,0.08)]" />
+              {(category.products || []).slice(0, 5).map((product) => (
+                <div key={product.id} className="flex flex-col items-center">
+                  <div className="h-20 w-20 rounded-lg border border-[#b6cbb4] bg-[#d6e3d7] shadow-[inset_0_2px_3px_rgba(0,0,0,0.08)] overflow-hidden">
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <div className="mt-2 flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#8fba5a]" />
                     <span className="h-1.5 w-1.5 rounded-full bg-[#d7f08f]" />

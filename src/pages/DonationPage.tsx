@@ -5,7 +5,7 @@ interface DonationPageProps {
   onStartDonating?: () => void;
 }
 
-const DonationPage: React.FC<DonationPageProps> = ({ onNavigateBack, onStartDonating }) => {
+const DonationPage: React.FC<DonationPageProps> = ({ onStartDonating }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-sky-50 py-12">
       <div className="max-w-6xl mx-auto px-6">

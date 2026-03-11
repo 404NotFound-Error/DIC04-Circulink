@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient, User } from '../lib/api';
-import { getCurrentUser, getProfile } from '../lib/supabase';
+import { getCurrentUser, getProfile } from '../lib/backend';
 
 interface Profile {
   id: string;
@@ -18,9 +18,7 @@ export const useAuth = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+  const getInitialSession = async () => {
       const { user: currentUser } = await getCurrentUser();
       setUser(currentUser);
       
@@ -30,19 +28,20 @@ export const useAuth = () => {
       }
       
       // If no user and in dev, try auto-login with test credentials
-      if (!currentUser && import.meta.env.DEV) {
+    const autoLoginDisabled = typeof window !== 'undefined' && localStorage.getItem('circulink.disableAutoLogin') === 'true';
+    if (!currentUser && import.meta.env.DEV && !autoLoginDisabled) {
         try {
           const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
           const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
 
           // Try login
           const loginResult = await apiClient.login(email, password);
-          if (loginResult.data.user) {
-            setUser(loginResult.data.user);
-            const { data: profileData } = await getProfile(loginResult.data.user.id);
+          if (loginResult.user) {
+            setUser(loginResult.user);
+            const { data: profileData } = await getProfile(loginResult.user.id);
             setProfile(profileData);
           }
-        } catch (error) {
+        } catch {
           // Try register then login
           try {
             await apiClient.register({
@@ -54,9 +53,9 @@ export const useAuth = () => {
               (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
               (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123'
             );
-            if (loginResult.data.user) {
-              setUser(loginResult.data.user);
-              const { data: profileData } = await getProfile(loginResult.data.user.id);
+            if (loginResult.user) {
+              setUser(loginResult.user);
+              const { data: profileData } = await getProfile(loginResult.user.id);
               setProfile(profileData);
             }
           } catch {
@@ -65,13 +64,21 @@ export const useAuth = () => {
         }
       }
 
-      setLoading(false);
-    };
+    setLoading(false);
+  };
 
+  useEffect(() => {
     getInitialSession();
 
-    // Note: Express API doesn't have real-time auth state changes like Supabase
-    // For now, we rely on initial load and explicit login/logout calls
+    const handleAuthChange = () => {
+      setLoading(true);
+      getInitialSession();
+    };
+
+    window.addEventListener('auth:change', handleAuthChange);
+    return () => {
+      window.removeEventListener('auth:change', handleAuthChange);
+    };
   }, []);
 
   return {

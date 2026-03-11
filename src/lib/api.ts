@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 class ApiError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -10,11 +11,13 @@ class ApiError extends Error {
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
+  private refreshToken: string | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     // Load token from localStorage on init
     this.token = localStorage.getItem("access_token");
+    this.refreshToken = localStorage.getItem("refresh_token");
   }
 
   setToken(token: string | null) {
@@ -24,6 +27,20 @@ class ApiClient {
     } else {
       localStorage.removeItem("access_token");
     }
+  }
+
+  setRefreshToken(token: string | null) {
+    this.refreshToken = token;
+    if (token) {
+      localStorage.setItem("refresh_token", token);
+    } else {
+      localStorage.removeItem("refresh_token");
+    }
+  }
+
+  setTokens(accessToken: string | null, refreshToken: string | null) {
+    this.setToken(accessToken);
+    this.setRefreshToken(refreshToken);
   }
 
   getToken(): string | null {
@@ -64,43 +81,61 @@ class ApiClient {
     return response.json();
   }
 
-  // Auth endpoints
   async register(data: {
     email: string;
     password: string;
     name: string;
   }) {
-    return this.request<{ data: { user: User; token: string } }>("/auth/register", {
+    const response = await this.request<{ user: User; tokens: { accessToken: string; refreshToken: string } }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    this.setTokens(response.tokens.accessToken, response.tokens.refreshToken);
+    return response;
   }
 
   async login(email: string, password: string) {
-    const response = await this.request<{ data: { user: User; token: string } }>("/auth/login", {
+    const response = await this.request<{ user: User; tokens: { accessToken: string; refreshToken: string } }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(response.data.token);
+    this.setTokens(response.tokens.accessToken, response.tokens.refreshToken);
+    return response;
+  }
+
+  async refreshSession() {
+    if (!this.refreshToken) {
+      throw new ApiError(401, "Missing refresh token", "UNAUTHORIZED");
+    }
+    const response = await this.request<{ tokens: { accessToken: string; refreshToken: string } }>("/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken: this.refreshToken }),
+    });
+    this.setTokens(response.tokens.accessToken, response.tokens.refreshToken);
     return response;
   }
 
   async logout() {
     try {
-      await this.request("/auth/logout", { method: "POST" });
+      if (this.refreshToken) {
+        await this.request("/auth/logout", {
+          method: "POST",
+          body: JSON.stringify({ refreshToken: this.refreshToken }),
+        });
+      }
     } finally {
-      this.setToken(null);
+      this.setTokens(null, null);
     }
   }
 
   async getCurrentUser() {
-    if (!this.token) return { data: null };
+    if (!this.token) return { user: null };
     try {
-      return await this.request<{ data: User }>("/auth/me");
+      return await this.request<{ user: User }>("/auth/me");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        this.setToken(null);
-        return { data: null };
+        this.setTokens(null, null);
+        return { user: null };
       }
       throw error;
     }
@@ -279,7 +314,15 @@ export interface User {
   email: string;
   name: string | null;
   role: string;
+  emailVerifiedAt?: string | null;
 }
+
+export const resolveAssetUrl = (path: string | null | undefined) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  const prefix = path.startsWith("/") ? "" : "/";
+  return `${API_ORIGIN}${prefix}${path}`;
+};
 
 export interface Category {
   id: string;

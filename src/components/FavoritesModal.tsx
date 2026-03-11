@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { X, Heart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getFavorites } from '../lib/supabase';
+import { getFavorites } from '../lib/backend';
 import ItemCard from './ItemCard';
+import type { Favorite } from '../lib/api';
 
 interface FavoritesModalProps {
   isOpen: boolean;
@@ -11,16 +12,10 @@ interface FavoritesModalProps {
 
 const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      loadFavorites();
-    }
-  }, [isOpen, user]);
-
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     if (!user) return;
     
     setLoading(true);
@@ -29,7 +24,13 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
       setFavorites(data);
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void loadFavorites();
+    }
+  }, [isOpen, loadFavorites]);
 
   if (!isOpen) return null;
 

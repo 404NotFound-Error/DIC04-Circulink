@@ -1,17 +1,23 @@
 import { Request, Response } from "express";
+import { Condition, ItemStatus } from "@prisma/client";
 import { createItem, deleteItem, getItemById, listItems, updateItem } from "./service.js";
 
 export const listItemsController = async (req: Request, res: Response) => {
+  const condition = req.query.condition as Condition | undefined;
+  const status = req.query.status as ItemStatus | undefined;
+  const sort = req.query.sort as "price" | "createdAt" | undefined;
+  const order = req.query.order as "asc" | "desc" | undefined;
+
   const { items, total, page, pageSize } = await listItems({
     categoryId: req.query.categoryId as string | undefined,
     q: req.query.q as string | undefined,
     minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
     maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-    condition: req.query.condition as any,
-    status: req.query.status as any,
+    condition,
+    status,
     sellerId: req.query.sellerId as string | undefined,
-    sort: req.query.sort as any,
-    order: req.query.order as any,
+    sort,
+    order,
     page: req.query.page ? Number(req.query.page) : undefined,
     pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined
   });
