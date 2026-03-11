@@ -30,4 +30,5 @@ cd DIC04-Circulink
 npm install -g pnpm
 pnpm install
 pnpm run dev
+npm run dev:server  #如果要看profile相关页面数据需要运行这个
 ```
