@@ -1,37 +1,34 @@
 # DIC04-Circulink
 
-CircuLink 本地开发说明（统一使用 `npm`）。
+Circulink 项目本地运行说明。
 
-## 当前技术路线
+## 项目简介
 
-- 前端：Vite + React + TypeScript
-- 后端：Express + TypeScript + Prisma（`npm run dev:server`）
-- 数据库：Prisma（`DATABASE_URL`）
-
-说明：前端业务调用统一在 `src/lib/backend.ts` 与 `src/lib/api.ts`，默认连接本地 Express API。
+这是一个基于 **Vite + React + TypeScript** 的前端项目。
 
 ## 环境要求
 
-- Node.js 18+（建议 20+）
-- npm 9+
+请先确保本机已安装：
 
-## 启动步骤
+- Node.js（建议 18+，推荐 20+）
+- pnpm
+
+可用下面命令检查版本：
 
 ```bash
-npm install
-npm run dev:server
+node -v
+pnpm -v
 ```
 
-新开一个终端：
+推荐启动流程
+
+首次拉起项目，直接执行下面这组命令即可：
 
 ```bash
-npm run dev
-```
-
-## 常用命令
-
-```bash
-npm run build
-npm run lint
-npm run build:server
+git clone git@github.com:404NotFound-Error/DIC04-Circulink.git
+cd DIC04-Circulink
+npm install -g pnpm
+pnpm install
+pnpm run dev
+npm run dev:server  #如果要看profile相关页面数据需要运行这个
 ```
