@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { normalizePagination } from "../../utils/pagination.js";
+import { withParsedImages } from "../../utils/images.js";
 
 export const listThreads = async (userId: string, itemId?: string, page?: number, pageSize?: number) => {
   const { skip, take, page: currentPage, pageSize: currentSize } = normalizePagination({ page, pageSize });
@@ -25,7 +26,12 @@ export const listThreads = async (userId: string, itemId?: string, page?: number
       const unread = await prisma.message.count({
         where: { threadId: thread.id, isRead: false, NOT: { senderId: userId } }
       });
-      return { ...thread, unreadCount: unread, lastMessage: thread.messages[0] ?? null };
+      return {
+        ...thread,
+        item: withParsedImages(thread.item),
+        unreadCount: unread,
+        lastMessage: thread.messages[0] ?? null
+      };
     })
   );
 

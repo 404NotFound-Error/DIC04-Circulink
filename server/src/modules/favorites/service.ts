@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../utils/errors.js";
+import { withParsedImages } from "../../utils/images.js";
 
 export const listFavorites = async (userId: string, page?: number, pageSize?: number) => {
   const { skip, take, page: currentPage, pageSize: currentSize } = normalizePagination({ page, pageSize });
@@ -23,7 +24,15 @@ export const listFavorites = async (userId: string, page?: number, pageSize?: nu
     }),
     prisma.favorite.count({ where })
   ]);
-  return { favorites, total, page: currentPage, pageSize: currentSize };
+  return {
+    favorites: favorites.map((favorite) => ({
+      ...favorite,
+      item: withParsedImages(favorite.item)
+    })),
+    total,
+    page: currentPage,
+    pageSize: currentSize
+  };
 };
 
 export const addFavorite = async (userId: string, itemId: string) => {

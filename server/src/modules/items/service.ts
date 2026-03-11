@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
+import { serializeImages, withParsedImages } from "../../utils/images.js";
 
 // Define types as string constants since SQLite doesn't support enums
 type Condition = "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
@@ -62,7 +63,7 @@ export const listItems = async (filters: ListItemsInput) => {
     prisma.item.count({ where })
   ]);
 
-  return { items, total, page, pageSize };
+  return { items: items.map(withParsedImages), total, page, pageSize };
 };
 
 export const getItemById = async (id: string) => {
@@ -74,7 +75,7 @@ export const getItemById = async (id: string) => {
     }
   });
   if (!item) throw new NotFoundError("Item not found");
-  return item;
+  return withParsedImages(item);
 };
 
 export type CreateItemInput = {
@@ -88,7 +89,7 @@ export type CreateItemInput = {
 };
 
 export const createItem = async (sellerId: string, data: CreateItemInput) => {
-  return prisma.item.create({
+  const item = await prisma.item.create({
     data: {
       title: data.title,
       description: data.description,
@@ -96,10 +97,11 @@ export const createItem = async (sellerId: string, data: CreateItemInput) => {
       condition: data.condition,
       status: data.status,
       categoryId: data.categoryId,
-      images: JSON.stringify(data.images),
+      images: serializeImages(data.images),
       sellerId
     }
   });
+  return withParsedImages(item);
 };
 
 export const updateItem = async (id: string, userId: string, data: Partial<CreateItemInput>) => {
@@ -114,13 +116,14 @@ export const updateItem = async (id: string, userId: string, data: Partial<Creat
     ...(data.condition && { condition: data.condition }),
     ...(data.status && { status: data.status }),
     ...(data.categoryId && { categoryId: data.categoryId }),
-    ...(data.images && { images: JSON.stringify(data.images) })
+    ...(data.images && { images: serializeImages(data.images) })
   };
 
-  return prisma.item.update({
+  const updated = await prisma.item.update({
     where: { id },
     data: updateData
   });
+  return withParsedImages(updated);
 };
 
 export const deleteItem = async (id: string, userId: string) => {

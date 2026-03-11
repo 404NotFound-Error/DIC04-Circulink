@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { normalizePagination } from "../../utils/pagination.js";
+import { withParsedImages } from "../../utils/images.js";
 
 // Define OrderStatus as string constants since SQLite doesn't support enums
 type OrderStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
@@ -70,7 +71,15 @@ export const listOrders = async (
     prisma.order.count({ where })
   ]);
 
-  return { orders, total, page, pageSize };
+  return {
+    orders: orders.map((order) => ({
+      ...order,
+      item: withParsedImages(order.item)
+    })),
+    total,
+    page,
+    pageSize
+  };
 };
 
 export const updateOrderStatus = async (userId: string, orderId: string, nextStatus: OrderStatus) => {
@@ -99,5 +108,8 @@ export const getOrderById = async (userId: string, orderId: string) => {
   if (!order) throw new NotFoundError("Order not found");
   if (order.buyerId !== userId && order.sellerId !== userId) throw new ForbiddenError();
 
-  return order;
+  return {
+    ...order,
+    item: withParsedImages(order.item)
+  };
 };
