@@ -1,15 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface DonationThanksPageProps {
-  onNavigateBack?: () => void;
-}
-
-const DonationThanksPage: React.FC<DonationThanksPageProps> = ({ onNavigateBack }) => {
+const DonationThanksPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-sky-50 flex flex-col">
       <div className="p-6">
         <button
-          onClick={() => (typeof onNavigateBack === 'function' ? onNavigateBack() : null)}
+          onClick={() => navigate('/')}
           className="text-3xl text-emerald-800"
           aria-label="Back"
         >

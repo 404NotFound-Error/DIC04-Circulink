@@ -1,6 +1,31 @@
-import { PrismaClient, Prisma, Condition, ItemStatus, OrderStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+// String constants for SQLite compatibility (no enums)
+const Condition = {
+  NEW: 'NEW',
+  LIKE_NEW: 'LIKE_NEW',
+  GOOD: 'GOOD',
+  FAIR: 'FAIR'
+};
+
+const ItemStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  SOLD: 'SOLD',
+  ARCHIVED: 'ARCHIVED'
+};
+
+const OrderStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  PAID: 'PAID',
+  SHIPPED: 'SHIPPED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+};
 
 const categories = [
   { name: 'Components', slug: 'components' },
@@ -74,70 +99,70 @@ const sampleItems = [
   {
     title: 'Arduino Uno R3',
     description: 'Beginner-friendly board with pin labels and USB cable.',
-    price: '158.00',
+    price: 158.00,
     condition: Condition.GOOD,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-uno.jpg'],
+    images: ['https://via.placeholder.com/300?text=Arduino+Uno'],
     categorySlug: 'dev-boards',
     sellerEmail: 'seller@circulink.dev'
   },
   {
     title: 'Raspberry Pi 4B 4GB',
     description: 'Includes heatsinks and case, boots reliably.',
-    price: '299.00',
+    price: 299.00,
     condition: Condition.LIKE_NEW,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-pi.jpg'],
+    images: ['https://via.placeholder.com/300?text=Raspberry+Pi'],
     categorySlug: 'dev-boards',
     sellerEmail: 'seller@circulink.dev'
   },
   {
     title: 'Digital Multimeter',
     description: 'Backlit display with fresh probes.',
-    price: '79.00',
+    price: 79.00,
     condition: Condition.GOOD,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-meter.jpg'],
+    images: ['https://via.placeholder.com/300?text=Multimeter'],
     categorySlug: 'measurement-tools',
     sellerEmail: 'seller2@circulink.dev'
   },
   {
     title: 'Breadboard Starter Kit',
     description: 'Includes jumper wires and resistor pack.',
-    price: '45.00',
+    price: 45.00,
     condition: Condition.LIKE_NEW,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-breadboard.jpg'],
+    images: ['https://via.placeholder.com/300?text=Breadboard'],
     categorySlug: 'kits-bundles',
     sellerEmail: 'seller@circulink.dev'
   },
   {
     title: 'Assorted Resistor Pack',
     description: '1/4W with common values, labeled bags.',
-    price: '26.00',
+    price: 26.00,
     condition: Condition.GOOD,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-resistors.jpg'],
+    images: ['https://via.placeholder.com/300?text=Resistors'],
     categorySlug: 'components',
     sellerEmail: 'seller2@circulink.dev'
   },
   {
     title: '128x64 OLED Display',
     description: 'I2C OLED display, tested and working.',
-    price: '36.00',
+    price: 36.00,
     condition: Condition.GOOD,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-oled.jpg'],
+    images: ['https://via.placeholder.com/300?text=OLED+Display'],
     categorySlug: 'displays',
     sellerEmail: 'seller@circulink.dev'
   },
   {
     title: 'Li-ion Battery Pack (2x 18650)',
     description: 'Includes holder and JST connector.',
-    price: '52.00',
+    price: 52.00,
     condition: Condition.GOOD,
     status: ItemStatus.ACTIVE,
-    images: ['/uploads/sample-battery.jpg'],
+    images: ['https://via.placeholder.com/300?text=Battery+Pack'],
     categorySlug: 'power-batteries',
     sellerEmail: 'seller2@circulink.dev'
   }
@@ -223,10 +248,10 @@ async function main() {
       data: {
         title: entry.title,
         description: entry.description,
-        price: new Prisma.Decimal(entry.price),
+        price: entry.price,
         condition: entry.condition,
         status: entry.status,
-        images: entry.images,
+        images: JSON.stringify(entry.images),
         sellerId: seller.id,
         categoryId: category.id
       }

@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import { LanguageProvider } from './context/LanguageContext';
+import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import AboutPage from './pages/AboutPage';
 import CartPage from './pages/CartPage';
 import CategoryPage from './pages/CategoryPage';
 import SellPage from './pages/SellPage';
+import SellReviewPage from './pages/SellReviewPage';
 import BuyPage from './pages/BuyPage';
 import DonationPage from './pages/DonationPage';
 import DonationFormPage from './pages/DonationFormPage';
 import DonationThanksPage from './pages/DonationThanksPage';
+import MessagesPage from './pages/MessagesPage';
+import AIRecommendationPage from './pages/AIRecommendationPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 import NewItemModal from './components/NewItemModal';
 import FavoritesModal from './components/FavoritesModal';
 
@@ -30,8 +38,6 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);
   const [showFavoritesModal, setShowFavoritesModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'profile' | 'about' | 'cart' | 'category' | 'sell' | 'buy' | 'donation' | 'donationForm' | 'donationThanks'>('home');
-  const [selectedCategory, setSelectedCategory] = useState<{ name: string; products: Product[] } | null>(null);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -45,47 +51,6 @@ function App() {
     setShowFavoritesModal(true);
   };
 
-  const handleNavigateToProfile = () => {
-    setCurrentPage('profile');
-  };
-
-  const handleNavigateToAbout = () => {
-    setCurrentPage('about');
-  };
-
-  const handleNavigateToCart = () => {
-    setCurrentPage('cart');
-  };
-
-  const handleNavigateToSell = () => {
-    setCurrentPage('sell');
-  };
-
-  const handleNavigateToBuy = () => {
-    setCurrentPage('buy');
-  };
-
-  const handleNavigateToDonation = () => {
-    setCurrentPage('donation');
-  };
-
-  const handleStartDonating = () => {
-    setCurrentPage('donationForm');
-  };
-
-  const handleShowDonationThanks = () => {
-    setCurrentPage('donationThanks');
-  };
-
-  const handleNavigateToCategory = (categoryName: string, products: Product[]) => {
-    setSelectedCategory({ name: categoryName, products });
-    setCurrentPage('category');
-  };
-
-  const handleNavigateBack = () => {
-    setCurrentPage('home');
-  };
-
   return (
     <LanguageProvider>
       <div className="min-h-screen bg-gray-50">
@@ -93,46 +58,32 @@ function App() {
           onSearch={handleSearch}
           onNewItem={handleNewItem}
           onShowFavorites={handleShowFavorites}
-          onNavigateToProfile={handleNavigateToProfile}
-          onNavigateToAbout={handleNavigateToAbout}
-          onNavigateToCart={handleNavigateToCart}
-          onNavigateToSell={handleNavigateToSell}
-          onNavigateToBuy={handleNavigateToBuy}
-          onNavigateToDonation={handleNavigateToDonation}
         />
 
-        {currentPage === 'home' ? (
-          <>
-            <ProductsPage searchQuery={searchQuery} onNavigateToCategory={handleNavigateToCategory} />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage searchQuery={searchQuery} />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/category/:categoryName" element={<CategoryPage />} />
+          <Route path="/sell" element={<SellPage />} />
+          <Route path="/sell/review" element={<SellReviewPage />} />
+          <Route path="/buy" element={<BuyPage />} />
+          <Route path="/donation" element={<DonationPage />} />
+          <Route path="/donation/form" element={<DonationFormPage />} />
+          <Route path="/donation/thanks" element={<DonationThanksPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/ai-recommendation" element={<AIRecommendationPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
+        </Routes>
 
-            <NewItemModal
-              isOpen={showNewItemModal}
-              onClose={() => setShowNewItemModal(false)}
-            />
-          </>
-        ) : currentPage === 'profile' ? (
-          <ProfilePage onNavigateBack={handleNavigateBack} />
-        ) : currentPage === 'about' ? (
-          <AboutPage onNavigateBack={handleNavigateBack} />
-        ) : currentPage === 'cart' ? (
-          <CartPage onNavigateBack={handleNavigateBack} />
-        ) : currentPage === 'category' && selectedCategory ? (
-          <CategoryPage
-            categoryName={selectedCategory.name}
-            products={selectedCategory.products}
-            onNavigateBack={handleNavigateBack}
-          />
-        ) : currentPage === 'sell' ? (
-          <SellPage onNavigateBack={handleNavigateBack} />
-        ) : currentPage === 'buy' ? (
-          <BuyPage onNavigateBack={handleNavigateBack} />
-        ) : currentPage === 'donation' ? (
-          <DonationPage onNavigateBack={handleNavigateBack} onStartDonating={handleStartDonating} />
-        ) : currentPage === 'donationForm' ? (
-          <DonationFormPage onNavigateBack={handleNavigateBack} onConfirm={handleShowDonationThanks} />
-        ) : currentPage === 'donationThanks' ? (
-          <DonationThanksPage onNavigateBack={handleNavigateBack} />
-        ) : null}
+        <NewItemModal
+          isOpen={showNewItemModal}
+          onClose={() => setShowNewItemModal(false)}
+        />
         
         <FavoritesModal
           isOpen={showFavoritesModal}

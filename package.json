@@ -13,7 +13,8 @@
     "start:server": "node dist/server/index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
@@ -27,7 +28,7 @@
     "pino": "^9.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite-react-typescript-starter": "link:",
+    "react-router-dom": "^6.20.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

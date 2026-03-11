@@ -219,3 +219,34 @@ export const resetPassword = async (token: string, password: string) => {
     })
   ]);
 };
+
+export const updateUserProfile = async (
+  userId: string,
+  data: { name?: string; phone?: string; university?: string; avatarUrl?: string }
+) => {
+  const updateData: Prisma.UserUpdateInput = {};
+  
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.university !== undefined) updateData.university = data.university;
+  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      phone: true,
+      university: true,
+      avatarUrl: true,
+      role: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  return user;
+};

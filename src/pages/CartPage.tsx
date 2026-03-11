@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trash } from 'lucide-react';
 
 const sampleCart = [
@@ -7,11 +8,12 @@ const sampleCart = [
   { id: '3', title: 'Item1', subtitle: 'T-Shirt', price: 5 },
 ];
 
-const CartPage: React.FC<{ onNavigateBack: () => void }> = ({ onNavigateBack }) => {
+const CartPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen py-8" style={{ background: 'linear-gradient(to bottom, #b4edc6, #bfe7e5)' }}>
       <div className="max-w-6xl mx-auto px-6">
-        <button onClick={onNavigateBack} className="mb-4 px-3 py-1 text-gray-700 hover:text-gray-900">← Back</button>
+        <button onClick={() => navigate('/')} className="mb-4 px-3 py-1 text-gray-700 hover:text-gray-900">← Back</button>
 
         <h2 className="text-2xl font-semibold text-gray-900 mb-1">Shopping cart</h2>
         <p className="text-sm text-gray-600 mb-6">You have {sampleCart.length} item in your cart</p>

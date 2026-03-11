@@ -2,22 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Star, MapPin } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { getFavorites, addToFavorites, removeFromFavorites } from '../lib/supabase';
-
-interface Product {
-  id: string;
-  title: string;
-  price: number;
-  image: string;
-  condition: string;
-  location: string;
-  seller: string;
-  rating?: number;
-  reviewCount?: number;
-}
+import { apiClient, Item } from '../lib/api';
 
 interface ProductGridProps {
-  products: Product[];
+  products: Item[];
   onProductClick: (productId: string) => void;
 }
 
@@ -29,13 +17,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   useEffect(() => {
     const loadFavorites = async () => {
       if (!user) return;
-      const { data } = await getFavorites(user.id);
-      if (data) {
-        const map: Record<string, boolean> = {};
-        data.forEach((f: any) => {
-          if (f.item && f.item.id) map[f.item.id] = true;
-        });
-        setFavoritesSet(map);
+      try {
+        const response = await apiClient.getFavorites();
+        if (response.data) {
+          const map: Record<string, boolean> = {};
+          response.data.forEach((fav: any) => {
+            if (fav.itemId) map[fav.itemId] = true;
+          });
+          setFavoritesSet(map);
+        }
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
       }
     };
 
@@ -49,10 +41,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     try {
       const isFav = !!favoritesSet[productId];
       if (isFav) {
-        await removeFromFavorites(user.id, productId);
+        await apiClient.removeFavorite(productId);
         setFavoritesSet((s) => ({ ...s, [productId]: false }));
       } else {
-        await addToFavorites(user.id, productId);
+        await apiClient.addFavorite(productId);
         setFavoritesSet((s) => ({ ...s, [productId]: true }));
       }
     } catch (err) {
@@ -78,7 +70,18 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         >
             <div className="aspect-square bg-gray-100 relative overflow-hidden">
             <img
-              src={product.image}
+              src={
+                typeof product.images === 'string'
+                  ? (() => {
+                      try {
+                        const parsed = JSON.parse(product.images);
+                        return Array.isArray(parsed) ? parsed[0] : product.images;
+                      } catch {
+                        return product.images || 'https://via.placeholder.com/300';
+                      }
+                    })()
+                  : (product.images?.[0] || 'https://via.placeholder.com/300')
+              }
               alt={product.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -103,39 +106,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               {product.title}
             </h3>
 
-            {product.rating && (
-              <div className="flex items-center space-x-1 mb-2">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-3 w-3 ${
-                        i < Math.floor(product.rating!)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                {product.reviewCount && (
-                  <span className="text-xs text-gray-500">({product.reviewCount})</span>
-                )}
-              </div>
-            )}
-
             <div className="flex items-center justify-between mb-2">
               <span className="text-2xl font-bold text-gray-900">
                 ${product.price}
               </span>
             </div>
 
-            <div className="flex items-center text-xs text-gray-500 mb-1">
-              <MapPin className="h-3 w-3 mr-1" />
-              {product.location}
-            </div>
-
             <div className="text-xs text-gray-500">
-              {t('soldBy')} {product.seller}
+              {t('soldBy')} {product.seller?.name || product.seller?.email || '未知卖家'}
             </div>
           </div>
         </div>

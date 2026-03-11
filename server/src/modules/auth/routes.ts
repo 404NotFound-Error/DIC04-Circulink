@@ -10,6 +10,7 @@ import {
   registerSchema,
   requestVerifySchema,
   resetPasswordSchema,
+  updateProfileSchema,
   verifyEmailSchema
 } from "./schema.js";
 import {
@@ -21,6 +22,7 @@ import {
   registerController,
   requestVerifyController,
   resetPasswordController,
+  updateProfileController,
   verifyEmailController
 } from "./controller.js";
 
@@ -35,6 +37,8 @@ router.post("/refresh", validate(refreshSchema), asyncHandler(refreshController)
 router.post("/logout", validate(logoutSchema), asyncHandler(logoutController));
 
 router.get("/me", requireAuth, asyncHandler(meController));
+
+router.patch("/profile", requireAuth, validate(updateProfileSchema), asyncHandler(updateProfileController));
 
 router.post("/verify/request", validate(requestVerifySchema), asyncHandler(requestVerifyController));
 

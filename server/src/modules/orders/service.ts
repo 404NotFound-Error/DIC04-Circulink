@@ -1,14 +1,17 @@
-import { OrderStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { normalizePagination } from "../../utils/pagination.js";
 
+// Define OrderStatus as string constants since SQLite doesn't support enums
+type OrderStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+
 const allowedTransitions: Record<OrderStatus, { buyer: OrderStatus[]; seller: OrderStatus[] }> = {
-  PENDING: { buyer: [OrderStatus.CANCELLED], seller: [OrderStatus.ACCEPTED, OrderStatus.REJECTED] },
-  ACCEPTED: { buyer: [OrderStatus.PAID, OrderStatus.CANCELLED], seller: [] },
+  PENDING: { buyer: ["CANCELLED"], seller: ["ACCEPTED", "REJECTED"] },
+  ACCEPTED: { buyer: ["PAID", "CANCELLED"], seller: [] },
   REJECTED: { buyer: [], seller: [] },
-  PAID: { buyer: [OrderStatus.CANCELLED], seller: [OrderStatus.SHIPPED] },
-  SHIPPED: { buyer: [OrderStatus.COMPLETED], seller: [] },
+  PAID: { buyer: ["CANCELLED"], seller: ["SHIPPED"] },
+  SHIPPED: { buyer: ["COMPLETED"], seller: [] },
   COMPLETED: { buyer: [], seller: [] },
   CANCELLED: { buyer: [], seller: [] }
 };
@@ -31,8 +34,8 @@ export const createOrder = async (buyerId: string, data: { itemId: string; total
       itemId: item.id,
       buyerId,
       sellerId: item.sellerId,
-      status: OrderStatus.PENDING,
-      total: new Prisma.Decimal(total)
+      status: "PENDING",
+      total
     }
   });
 };
@@ -75,7 +78,7 @@ export const updateOrderStatus = async (userId: string, orderId: string, nextSta
   if (!order) throw new NotFoundError("Order not found");
 
   const role = getRole(order, userId);
-  const allowed = allowedTransitions[order.status][role];
+  const allowed = allowedTransitions[order.status as OrderStatus][role];
   if (!allowed.includes(nextStatus)) {
     throw new ForbiddenError(`Cannot change status from ${order.status} to ${nextStatus} as ${role}`);
   }

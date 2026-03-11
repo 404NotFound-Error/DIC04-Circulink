@@ -3,45 +3,25 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
+// Seed configuration
+// To run seeds: npm run prisma:seed
 
-enum Condition {
-  NEW
-  LIKE_NEW
-  GOOD
-  FAIR
-}
-
-enum ItemStatus {
-  DRAFT
-  ACTIVE
-  SOLD
-  ARCHIVED
-}
-
-enum OrderStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  PAID
-  SHIPPED
-  COMPLETED
-  CANCELLED
-}
+// Note: SQLite does not support enums, using String with validation in app layer
+// Role: USER, ADMIN
+// Condition: NEW, LIKE_NEW, GOOD, FAIR
+// ItemStatus: DRAFT, ACTIVE, SOLD, ARCHIVED
+// OrderStatus: PENDING, ACCEPTED, REJECTED, PAID, SHIPPED, COMPLETED, CANCELLED
 
 model User {
   id            String          @id @default(cuid())
   email         String          @unique
   passwordHash  String
   name          String?
-  role          Role            @default(USER)
+  role          String          @default("USER")
   emailVerifiedAt DateTime?
   profile       Profile?
   items         Item[]
@@ -84,12 +64,12 @@ model Item {
   id          String      @id @default(cuid())
   title       String
   description String
-  price       Decimal     @db.Decimal(12, 2)
-  condition   Condition
-  status      ItemStatus  @default(ACTIVE)
+  price       Float
+  condition   String
+  status      String      @default("ACTIVE")
   categoryId  String
   sellerId    String
-  images      String[]
+  images      String
   category    Category    @relation(fields: [categoryId], references: [id])
   seller      User        @relation(fields: [sellerId], references: [id])
   favorites   Favorite[]
@@ -152,8 +132,8 @@ model Order {
   itemId    String
   buyerId   String
   sellerId  String
-  status    OrderStatus @default(PENDING)
-  total     Decimal     @db.Decimal(12, 2) 
+  status    String      @default("PENDING")
+  total     Float
   item      Item        @relation(fields: [itemId], references: [id])
   buyer     User        @relation("ordersAsBuyer", fields: [buyerId], references: [id])
   seller    User        @relation("ordersAsSeller", fields: [sellerId], references: [id])
