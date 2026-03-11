@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Star, MapPin } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient, Item } from '../lib/api';
+import { apiClient, Favorite, Item } from '../lib/api';
 
 interface ProductGridProps {
   products: Item[];
@@ -21,7 +21,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         const response = await apiClient.getFavorites();
         if (response.data) {
           const map: Record<string, boolean> = {};
-          response.data.forEach((fav: any) => {
+          response.data.forEach((fav: Favorite) => {
             if (fav.itemId) map[fav.itemId] = true;
           });
           setFavoritesSet(map);

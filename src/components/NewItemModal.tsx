@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Upload, Loader, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { X, Loader, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../lib/api';
 

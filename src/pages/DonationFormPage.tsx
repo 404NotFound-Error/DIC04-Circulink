@@ -16,8 +16,6 @@ const DonationFormPage: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  // Categories
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [donationCategoryId, setDonationCategoryId] = useState<string>('');
 
   // UI state
@@ -30,7 +28,6 @@ const DonationFormPage: React.FC = () => {
     const loadCategories = async () => {
       try {
         const response = await apiClient.getCategories();
-        setCategories(response.data || []);
         // Find "Other" or first category for donations
         const otherCat = response.data?.find(c => c.name.toLowerCase().includes('other'));
         if (otherCat) {

@@ -18,7 +18,7 @@ export const authenticate: RequestHandler = (req, _res, next) => {
   try {
     const payload = jwt.verify(token, env.JWT_SECRET) as AuthUser;
     req.user = payload;
-  } catch (err) {
+  } catch {
     return next(new AuthError("Invalid token"));
   }
   return next();

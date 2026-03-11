@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Heart, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient } from '../lib/api';
+import { apiClient, Favorite } from '../lib/api';
 
 interface FavoritesModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface FavoritesModalProps {
 const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

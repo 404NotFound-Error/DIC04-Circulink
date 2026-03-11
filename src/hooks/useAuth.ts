@@ -42,7 +42,7 @@ export const useAuth = () => {
             const { data: profileData } = await getProfile(loginResult.user.id);
             setProfile(profileData);
           }
-        } catch (error) {
+        } catch {
           // Try register then login
           try {
             await apiClient.register({

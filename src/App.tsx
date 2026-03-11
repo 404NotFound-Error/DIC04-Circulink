@@ -22,18 +22,6 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import NewItemModal from './components/NewItemModal';
 import FavoritesModal from './components/FavoritesModal';
 
-interface Product {
-  id: string;
-  title: string;
-  price: number | string;
-  image: string;
-  condition?: string;
-  location?: string;
-  seller?: string;
-  rating?: number;
-  reviewCount?: number;
-}
-
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewItemModal, setShowNewItemModal] = useState(false);

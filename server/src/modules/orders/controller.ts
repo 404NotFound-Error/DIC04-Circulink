@@ -7,9 +7,12 @@ export const createOrderController = async (req: Request, res: Response) => {
 };
 
 export const listOrdersController = async (req: Request, res: Response) => {
+  type Role = "buyer" | "seller";
+  type OrderStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
+
   const result = await listOrders(req.user!.id, {
-    role: req.query.role as any,
-    status: req.query.status as any,
+    role: req.query.role as Role | undefined,
+    status: req.query.status as OrderStatus | undefined,
     page: req.query.page ? Number(req.query.page) : undefined,
     pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined
   });

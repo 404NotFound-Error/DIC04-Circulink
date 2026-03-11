@@ -23,7 +23,12 @@ const OrdersPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const params: any = {
+      const params: {
+        role: 'buyer' | 'seller';
+        page: number;
+        pageSize: number;
+        status?: string;
+      } = {
         role: activeTab,
         page: 1,
         pageSize: 50

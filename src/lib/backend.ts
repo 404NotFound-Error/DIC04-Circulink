@@ -1,4 +1,4 @@
-import { apiClient, ApiError } from './api';
+import { apiClient, ApiError, CreateItemInput } from './api';
 
 // Auth helpers for Express API
 export const signUp = async (email: string, password: string, userData: {
@@ -49,7 +49,7 @@ export const createAndSignInTestUser = async () => {
   const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
 
   // Try signing in first
-  let { data, error } = await signIn(email, password);
+  const { data, error } = await signIn(email, password);
   if (!error) return { data, error: null };
 
   // If sign-in failed, attempt to sign up the user
@@ -112,7 +112,7 @@ export const getProfile = async (userId: string) => {
   }
 };
 
-export const updateProfile = async (userId: string, updates: any) => {
+export const updateProfile = async (userId: string, updates: Record<string, unknown>) => {
   // Backend doesn't support profile updates yet - return success for now
   return { data: { id: userId, ...updates }, error: null };
 };
@@ -150,7 +150,7 @@ export const getItem = async (itemId: string) => {
   }
 };
 
-export const createItem = async (itemData: any) => {
+export const createItem = async (itemData: CreateItemInput) => {
   try {
     const response = await apiClient.createItem(itemData);
     return { data: response.data, error: null };
@@ -159,7 +159,7 @@ export const createItem = async (itemData: any) => {
   }
 };
 
-export const updateItem = async (itemId: string, updates: any) => {
+export const updateItem = async (itemId: string, updates: Partial<CreateItemInput>) => {
   try {
     const response = await apiClient.updateItem(itemId, updates);
     return { data: response.data, error: null };

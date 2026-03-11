@@ -1,11 +1,30 @@
 import React from 'react';
-import { Heart, Eye, MapPin, Star } from 'lucide-react';
+import { Heart, Eye, MapPin } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { addToFavorites, removeFromFavorites } from '../lib/backend';
 
+interface ItemCardSeller {
+  avatar_url?: string;
+  full_name?: string;
+  university?: string;
+}
+
+interface ItemCardData {
+  id: string;
+  title: string;
+  price: number | string;
+  condition: string;
+  images: string[];
+  seller?: ItemCardSeller;
+  location?: string;
+  created_at: string;
+  views?: number;
+  tags: string[];
+}
+
 interface ItemCardProps {
-  item: any;
-  onItemClick: (item: any) => void;
+  item: ItemCardData;
+  onItemClick: (item: ItemCardData) => void;
   isFavorited?: boolean;
   onFavoriteChange?: () => void;
 }

@@ -46,8 +46,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         university: '',
         phone: ''
       });
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }

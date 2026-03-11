@@ -1,5 +1,4 @@
 import React from 'react';
-import ProductGrid from './ProductGrid';
 
 interface Product {
   id: string;
@@ -82,4 +81,3 @@ const CategorySection: React.FC<CategorySectionProps> = ({ title, products, onVi
 };
 
 export default CategorySection;
-
