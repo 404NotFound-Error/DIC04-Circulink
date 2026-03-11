@@ -3,14 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // Seed configuration
 // To run seeds: npm run prisma:seed
 
-// Note: SQLite does not support enums, using String with validation in app layer
+// Note: enums are validated in app layer for now
 // Role: USER, ADMIN
 // Condition: NEW, LIKE_NEW, GOOD, FAIR
 // ItemStatus: DRAFT, ACTIVE, SOLD, ARCHIVED

@@ -139,11 +139,16 @@ echo
 section "GET /categories"
 CATS=$(request GET "/categories")
 echo "$CATS"
-CAT_ID=$(get_field "$CATS" "['data'][0]['id']") || {
-  echo "ERROR: category id missing"
+CAT_ID=$(get_field "$CATS" "['data'][0]['id']" 2>/dev/null || true)
+if [ -z "${CAT_ID:-}" ]; then
+  echo "No categories found. Creating one for smoke test..."
+  CAT_ID=$(node --input-type=module -e 'import { PrismaClient } from "@prisma/client"; const prisma = new PrismaClient(); const slug = `smoke-${Date.now()}`; const category = await prisma.category.create({ data: { name: "Smoke Test", slug } }); console.log(category.id); await prisma.$disconnect();' 2>/dev/null)
+fi
+if [ -z "${CAT_ID:-}" ]; then
+  echo "ERROR: category id missing and auto-create failed"
   echo "$CATS"
   exit 1
-}
+fi
 
 section "POST /items"
 ITEM=$(request POST "/items" "{\"title\":\"Test Item $TS\",\"description\":\"Seeded test item\",\"price\":99,\"condition\":\"GOOD\",\"status\":\"ACTIVE\",\"categoryId\":\"$CAT_ID\",\"images\":[]}" "$SELLER_TOKEN")
