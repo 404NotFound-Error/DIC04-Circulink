@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createOrder, listOrders, updateOrderStatus } from "./service.js";
+import { createOrder, getOrderById, listOrders, updateOrderStatus } from "./service.js";
 
 export const createOrderController = async (req: Request, res: Response) => {
   const order = await createOrder(req.user!.id, req.body);
@@ -16,7 +16,12 @@ export const listOrdersController = async (req: Request, res: Response) => {
   res.json({ data: result.orders, meta: { page: result.page, pageSize: result.pageSize, total: result.total } });
 };
 
+export const getOrderByIdController = async (req: Request, res: Response) => {
+  const order = await getOrderById(req.user!.id, String(req.params.id));
+  res.json({ data: order });
+};
+
 export const updateOrderStatusController = async (req: Request, res: Response) => {
-  const order = await updateOrderStatus(req.user!.id, req.params.id, req.body.status);
+  const order = await updateOrderStatus(req.user!.id, String(req.params.id), req.body.status);
   res.json({ data: order });
 };

@@ -22,6 +22,12 @@ export const listOrdersSchema = z.object({
   body: z.object({})
 });
 
+export const getOrderByIdSchema = z.object({
+  params: z.object({ id: z.string() }),
+  query: z.object({}),
+  body: z.object({})
+});
+
 export const updateOrderStatusSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({ status: statusEnum }),

@@ -87,24 +87,9 @@ const DonationFormPage: React.FC = () => {
     const urls: string[] = [];
 
     for (const file of selectedFiles) {
-      const formData = new FormData();
-      formData.append('file', file);
-
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000/api'}/uploads`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiClient.getToken()}`
-          },
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
-
-        const data = await response.json();
-        urls.push(data.data.url);
+        const data = await apiClient.uploadFile(file);
+        urls.push(data.data.path);
       } catch (err) {
         console.error('Image upload error:', err);
         throw new Error('Failed to upload image');

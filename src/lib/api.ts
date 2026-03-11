@@ -184,6 +184,13 @@ class ApiClient {
     return this.request<void>(`/favorites/${favoriteId}`, { method: "DELETE" });
   }
 
+  async removeFavoriteByItemId(itemId: string) {
+    const response = await this.getFavorites({ page: 1, pageSize: 100 });
+    const favorite = response.data.find((entry) => entry.itemId === itemId);
+    if (!favorite) return;
+    await this.removeFavorite(favorite.id);
+  }
+
   // Messages
   async getMessageThreads(params?: { page?: number; pageSize?: number }) {
     const query = new URLSearchParams();
@@ -192,7 +199,7 @@ class ApiClient {
         if (value !== undefined) query.append(key, String(value));
       });
     }
-    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/message-threads?${query}`);
+    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/messages?${query}`);
   }
 
   async getThreads(params?: { itemId?: string; page?: number; pageSize?: number }) {
@@ -202,23 +209,37 @@ class ApiClient {
         if (value !== undefined) query.append(key, String(value));
       });
     }
-    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/message-threads?${query}`);
+    return this.request<{ data: MessageThread[]; meta: PaginationMeta }>(`/messages?${query}`);
   }
 
   async getMessages(threadId: string, params?: { page?: number; pageSize?: number }) {
-    const query = new URLSearchParams();
+    const query = new URLSearchParams({ threadId });
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) query.append(key, String(value));
       });
     }
-    return this.request<{ data: Message[]; meta: PaginationMeta }>(`/message-threads/${threadId}/messages?${query}`);
+    return this.request<{ data: Message[]; meta: PaginationMeta }>(`/messages?${query}`);
   }
 
-  async sendMessage(threadId: string, body: string) {
-    return this.request<{ data: Message }>(`/message-threads/${threadId}/messages`, {
+  async sendMessage(
+    threadOrPayload:
+      | string
+      | {
+          threadId?: string;
+          itemId?: string;
+          recipientId?: string;
+          body: string;
+        },
+    body?: string
+  ) {
+    const payload =
+      typeof threadOrPayload === "string"
+        ? { threadId: threadOrPayload, body: body ?? "" }
+        : threadOrPayload;
+    return this.request<{ data: Message }>("/messages", {
       method: "POST",
-      body: JSON.stringify({ body }),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -228,10 +249,7 @@ class ApiClient {
     recipientId?: string;
     body: string;
   }) {
-    return this.request<{ data: Message }>("/messages", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    return this.sendMessage(data);
   }
 
   async markMessageRead(messageId: string) {

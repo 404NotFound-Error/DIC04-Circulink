@@ -38,9 +38,9 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleRemoveFavorite = async (itemId: string) => {
+  const handleRemoveFavorite = async (favoriteId: string, itemId: string) => {
     try {
-      await apiClient.removeFavorite(itemId);
+      await apiClient.removeFavorite(favoriteId);
       setFavorites(prev => prev.filter(fav => fav.itemId !== itemId));
     } catch (err) {
       console.error('Failed to remove favorite:', err);
@@ -134,9 +134,9 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
                         className="w-full h-full object-cover"
                       />
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveFavorite(item.id);
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          handleRemoveFavorite(favorite.id, item.id);
                         }}
                         className="absolute top-2 right-2 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
                       >

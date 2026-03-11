@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, Eye, MapPin, Star } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { addToFavorites, removeFromFavorites } from '../lib/supabase';
+import { addToFavorites, removeFromFavorites } from '../lib/backend';
 
 interface ItemCardProps {
   item: any;

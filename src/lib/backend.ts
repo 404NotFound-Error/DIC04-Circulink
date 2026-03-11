@@ -1,6 +1,6 @@
-import { apiClient, ApiError, User } from './api';
+import { apiClient, ApiError } from './api';
 
-// Auth helpers (migrated from Supabase to Express API)
+// Auth helpers for Express API
 export const signUp = async (email: string, password: string, userData: {
   full_name: string;
   university?: string;
@@ -12,7 +12,7 @@ export const signUp = async (email: string, password: string, userData: {
       password,
       name: userData.full_name
     });
-    return { data: response.data, error: null };
+    return { data: response, error: null };
   } catch (error) {
     return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -21,7 +21,7 @@ export const signUp = async (email: string, password: string, userData: {
 export const signIn = async (email: string, password: string) => {
   try {
     const response = await apiClient.login(email, password);
-    return { data: response.data, error: null };
+    return { data: response, error: null };
   } catch (error) {
     return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -80,7 +80,7 @@ export const signOut = async () => {
 export const getCurrentUser = async () => {
   try {
     const response = await apiClient.getCurrentUser();
-    return { user: response.data, error: null };
+    return { user: response.user, error: null };
   } catch (error) {
     return { user: null, error: error instanceof ApiError ? error : new Error(String(error)) };
   }
@@ -189,6 +189,7 @@ export const getCategories = async () => {
 
 // Favorites helpers
 export const getFavorites = async (userId: string) => {
+  void userId;
   try {
     const response = await apiClient.getFavorites();
     return { data: response.data, error: null };
@@ -198,6 +199,7 @@ export const getFavorites = async (userId: string) => {
 };
 
 export const addToFavorites = async (userId: string, itemId: string) => {
+  void userId;
   try {
     const response = await apiClient.addFavorite(itemId);
     return { data: response.data, error: null };
@@ -207,13 +209,9 @@ export const addToFavorites = async (userId: string, itemId: string) => {
 };
 
 export const removeFromFavorites = async (userId: string, itemId: string) => {
+  void userId;
   try {
-    // Get favorites to find favorite ID
-    const favs = await apiClient.getFavorites();
-    const favorite = favs.data.find(f => f.itemId === itemId && f.userId === userId);
-    if (favorite) {
-      await apiClient.removeFavorite(favorite.id);
-    }
+    await apiClient.removeFavoriteByItemId(itemId);
     return { error: null };
   } catch (error) {
     return { error: error instanceof ApiError ? error : new Error(String(error)) };

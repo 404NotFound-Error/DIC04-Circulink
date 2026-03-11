@@ -72,7 +72,7 @@ export default function ProductDetailPage() {
   const handleToggleFavorite = async () => {
     try {
       if (isFavorited) {
-        await apiClient.removeFavorite(item.id);
+        await apiClient.removeFavoriteByItemId(item.id);
       } else {
         await apiClient.addFavorite(item.id);
       }

@@ -85,3 +85,19 @@ export const updateOrderStatus = async (userId: string, orderId: string, nextSta
 
   return prisma.order.update({ where: { id: orderId }, data: { status: nextStatus } });
 };
+
+export const getOrderById = async (userId: string, orderId: string) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      item: { select: { id: true, title: true, price: true, images: true } },
+      buyer: { select: { id: true, email: true, name: true } },
+      seller: { select: { id: true, email: true, name: true } }
+    }
+  });
+
+  if (!order) throw new NotFoundError("Order not found");
+  if (order.buyerId !== userId && order.sellerId !== userId) throw new ForbiddenError();
+
+  return order;
+};

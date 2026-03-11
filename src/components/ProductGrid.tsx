@@ -41,7 +41,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
     try {
       const isFav = !!favoritesSet[productId];
       if (isFav) {
-        await apiClient.removeFavorite(productId);
+        await apiClient.removeFavoriteByItemId(productId);
         setFavoritesSet((s) => ({ ...s, [productId]: false }));
       } else {
         await apiClient.addFavorite(productId);

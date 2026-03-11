@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, Edit2, Save, X, Package, Heart, ShoppingBag } from 'lucide-react';
-import { signOut } from '../lib/supabase';
+import { signOut } from '../lib/backend';
 import { apiClient } from '../lib/api';
 import type { Item } from '../lib/api';
 interface Favorite {

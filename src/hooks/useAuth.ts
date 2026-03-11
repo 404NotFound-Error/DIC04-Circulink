@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient, User } from '../lib/api';
-import { getCurrentUser, getProfile } from '../lib/supabase';
+import { getCurrentUser, getProfile } from '../lib/backend';
 
 interface Profile {
   id: string;
@@ -70,7 +70,7 @@ export const useAuth = () => {
 
     getInitialSession();
 
-    // Note: Express API doesn't have real-time auth state changes like Supabase
+    // Note: current backend auth flow doesn't provide real-time auth state events
     // For now, we rely on initial load and explicit login/logout calls
   }, []);
 

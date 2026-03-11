@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, Bell, ChevronDown, ShoppingCart, Package } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { signOut } from '../lib/supabase';
+import { signOut } from '../lib/backend';
 import AuthModal from './AuthModal';
 
 interface HeaderProps {
