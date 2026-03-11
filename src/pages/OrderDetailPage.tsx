@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -31,13 +31,14 @@ const OrderDetailPage: React.FC = () => {
     if (id) {
       loadOrderDetail();
     }
-  }, [id]);
+  }, [id, loadOrderDetail]);
 
-  const loadOrderDetail = async () => {
+  const loadOrderDetail = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getOrderById(id!);
+      const response = await apiClient.getOrderById(id);
       setOrder(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load order details');
@@ -45,7 +46,7 @@ const OrderDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const updateOrderStatus = async (newStatus: string) => {
     if (!order) return;

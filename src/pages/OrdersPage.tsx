@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Clock, CheckCircle, XCircle, Truck, DollarSign, User, Calendar, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -17,9 +17,9 @@ const OrdersPage: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-  }, [activeTab, statusFilter]);
+  }, [loadOrders]);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -44,7 +44,7 @@ const OrdersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, statusFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

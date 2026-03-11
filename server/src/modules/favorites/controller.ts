@@ -16,6 +16,6 @@ export const addFavoriteController = async (req: Request, res: Response) => {
 };
 
 export const removeFavoriteController = async (req: Request, res: Response) => {
-  await removeFavorite(req.user!.id, req.params.id);
+  await removeFavorite(req.user!.id, String(req.params.id));
   res.status(204).send();
 };

@@ -28,18 +28,22 @@ const parseDurationMs = (value: string) => {
 };
 
 const issueAccessToken = (user: { id: string; email: string; role: string }) => {
+  const options: jwt.SignOptions = {
+    expiresIn: authConfig.accessTtl as unknown as jwt.SignOptions["expiresIn"]
+  };
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
-    env.JWT_SECRET,
-    { expiresIn: authConfig.accessTtl }
+    env.JWT_SECRET as jwt.Secret,
+    options
   );
 };
 
 const issueRefreshToken = (userId: string) => {
   const jti = crypto.randomUUID();
-  return jwt.sign({ sub: userId, typ: "refresh", jti }, env.JWT_REFRESH_SECRET, {
-    expiresIn: authConfig.refreshTtl
-  });
+  const options: jwt.SignOptions = {
+    expiresIn: authConfig.refreshTtl as unknown as jwt.SignOptions["expiresIn"]
+  };
+  return jwt.sign({ sub: userId, typ: "refresh", jti }, env.JWT_REFRESH_SECRET as jwt.Secret, options);
 };
 
 const createRefreshTokenRecord = async (userId: string) => {
@@ -225,11 +229,25 @@ export const updateUserProfile = async (
   data: { name?: string; phone?: string; university?: string; avatarUrl?: string }
 ) => {
   const updateData: Prisma.UserUpdateInput = {};
-  
+
   if (data.name !== undefined) updateData.name = data.name;
-  if (data.phone !== undefined) updateData.phone = data.phone;
-  if (data.university !== undefined) updateData.university = data.university;
-  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
+  if (data.phone !== undefined || data.university !== undefined || data.avatarUrl !== undefined) {
+    updateData.profile = {
+      upsert: {
+        create: {
+          displayName: data.name ?? "",
+          phone: data.phone ?? null,
+          university: data.university ?? null,
+          avatarUrl: data.avatarUrl ?? null
+        },
+        update: {
+          ...(data.phone !== undefined ? { phone: data.phone } : {}),
+          ...(data.university !== undefined ? { university: data.university } : {}),
+          ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {})
+        }
+      }
+    };
+  }
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -238,11 +256,15 @@ export const updateUserProfile = async (
       id: true,
       email: true,
       name: true,
-      phone: true,
-      university: true,
-      avatarUrl: true,
       role: true,
-      emailVerified: true,
+      emailVerifiedAt: true,
+      profile: {
+        select: {
+          phone: true,
+          university: true,
+          avatarUrl: true
+        }
+      },
       createdAt: true,
       updatedAt: true
     }

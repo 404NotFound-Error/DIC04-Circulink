@@ -24,7 +24,7 @@ export const listItemsController = async (req: Request, res: Response) => {
 };
 
 export const getItemController = async (req: Request, res: Response) => {
-  const item = await getItemById(req.params.id);
+  const item = await getItemById(String(req.params.id));
   res.json({ data: item });
 };
 
@@ -34,11 +34,11 @@ export const createItemController = async (req: Request, res: Response) => {
 };
 
 export const updateItemController = async (req: Request, res: Response) => {
-  const item = await updateItem(req.params.id, req.user!.id, req.body);
+  const item = await updateItem(String(req.params.id), req.user!.id, req.body);
   res.json({ data: item });
 };
 
 export const deleteItemController = async (req: Request, res: Response) => {
-  await deleteItem(req.params.id, req.user!.id);
+  await deleteItem(String(req.params.id), req.user!.id);
   res.status(204).send();
 };

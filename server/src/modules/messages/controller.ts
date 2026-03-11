@@ -22,6 +22,6 @@ export const sendMessageController = async (req: Request, res: Response) => {
 };
 
 export const markReadController = async (req: Request, res: Response) => {
-  const message = await markMessageRead(req.user!.id, req.params.id);
+  const message = await markMessageRead(req.user!.id, String(req.params.id));
   res.json({ data: message });
 };

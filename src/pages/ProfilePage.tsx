@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
@@ -50,9 +50,9 @@ const ProfilePage: React.FC = () => {
     } else if (activeTab === 'favorites' && myFavorites.length === 0) {
       loadMyFavorites();
     }
-  }, [activeTab]);
+  }, [activeTab, loadMyFavorites, loadMyItems, myFavorites.length, myItems.length]);
 
-  const loadMyItems = async () => {
+  const loadMyItems = useCallback(async () => {
     if (!profile) return;
     setItemsLoading(true);
     try {
@@ -63,9 +63,9 @@ const ProfilePage: React.FC = () => {
     } finally {
       setItemsLoading(false);
     }
-  };
+  }, [profile]);
 
-  const loadMyFavorites = async () => {
+  const loadMyFavorites = useCallback(async () => {
     setFavoritesLoading(true);
     try {
       const response = await apiClient.getFavorites();
@@ -75,7 +75,7 @@ const ProfilePage: React.FC = () => {
     } finally {
       setFavoritesLoading(false);
     }
-  };
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
