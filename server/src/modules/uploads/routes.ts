@@ -11,16 +11,17 @@ import { uploadFileController } from "./controller.js";
 const router = Router();
 
 const storage = multer.diskStorage({
-  destination: async (_req, _file, cb) => {
+  destination: (_req, _file, cb) => {
     const now = new Date();
     const dir = path.join(
-      serverConfig.uploadDir,
+      path.resolve(serverConfig.uploadDir),
       now.getFullYear().toString(),
       (now.getMonth() + 1).toString().padStart(2, "0"),
       now.getDate().toString().padStart(2, "0")
     );
-    await fs.mkdir(dir, { recursive: true });
-    cb(null, dir);
+    fs.mkdir(dir, { recursive: true })
+      .then(() => cb(null, dir))
+      .catch((error) => cb(error as Error, dir));
   },
   filename: (_req, file, cb) => {
     const base = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
@@ -31,7 +32,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (/^image\/(jpe?g|png|webp|gif)$/i.test(file.mimetype)) return cb(null, true);
     return cb(new BadRequestError("Unsupported file type"));

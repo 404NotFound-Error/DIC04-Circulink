@@ -10,7 +10,7 @@ interface ProductGridProps {
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const [favoritesSet, setFavoritesSet] = useState<Record<string, boolean>>({});
 
@@ -117,7 +117,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
             </div>
 
             <div className="text-xs text-gray-500">
-              {t('soldBy')} {product.seller?.name || product.seller?.email || '未知卖家'}
+              {t('soldBy')} {product.seller?.name || product.seller?.email || (lang === 'zh' ? '未知卖家' : 'Unknown seller')}
             </div>
           </div>
         </div>

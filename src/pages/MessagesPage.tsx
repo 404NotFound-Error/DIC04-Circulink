@@ -3,6 +3,7 @@ import { MessageCircle, Send, Loader, AlertCircle, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient, Message as ApiMessage, MessageThread } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 type Message = ApiMessage & { isUser?: boolean };
 
@@ -19,6 +20,7 @@ interface ThreadDisplay {
 
 const MessagesPage: React.FC = () => {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const [searchParams] = useSearchParams();
   const [threads, setThreads] = useState<ThreadDisplay[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -88,7 +90,7 @@ const MessagesPage: React.FC = () => {
         buyerId: thread.buyerId,
         sellerId: thread.sellerId,
         participantName: thread.item?.title || `Thread ${thread.id.slice(0, 8)}`,
-        lastMessage: thread.lastMessage?.body || 'No messages yet',
+        lastMessage: thread.lastMessage?.body || (lang === 'zh' ? '暂无消息' : 'No messages yet'),
         unreadCount: thread.unreadCount || 0,
         lastMessageTime: thread.lastMessage?.createdAt
       }));
@@ -111,7 +113,7 @@ const MessagesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [queryItemId, querySellerId, user]);
+  }, [lang, queryItemId, querySellerId, user]);
 
   // Load all message threads on mount
   useEffect(() => {
@@ -145,7 +147,7 @@ const MessagesPage: React.FC = () => {
           body: newMessage
         });
       } else {
-        setError('Please select a conversation first');
+        setError(lang === 'zh' ? '请先选择会话' : 'Please select a conversation first');
         return;
       }
       setNewMessage('');
@@ -157,7 +159,7 @@ const MessagesPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Send message error:', err);
-      setError('Failed to send message');
+      setError(lang === 'zh' ? '发送消息失败' : 'Failed to send message');
     } finally {
       setSending(false);
     }
@@ -178,13 +180,13 @@ const MessagesPage: React.FC = () => {
         <div className="p-3 sm:p-6 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
           <h2 className="text-xl sm:text-2xl font-bold text-emerald-800 mb-3 flex items-center gap-2">
             <MessageCircle className="h-5 sm:h-6 w-5 sm:w-6" />
-            Messages
+            {lang === 'zh' ? '消息' : 'Messages'}
           </h2>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-emerald-600" />
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder={lang === 'zh' ? '搜索会话...' : 'Search conversations...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-emerald-200 focus:outline-none focus:border-emerald-500 bg-white"
@@ -198,14 +200,14 @@ const MessagesPage: React.FC = () => {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <Loader className="h-8 w-8 animate-spin text-emerald-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Loading conversations...</p>
+                <p className="text-sm text-gray-500">{lang === 'zh' ? '正在加载会话...' : 'Loading conversations...'}</p>
               </div>
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <MessageCircle className="h-12 w-12 mb-3 opacity-30 text-gray-400" />
-              <p className="text-sm text-gray-500 text-center">No conversations yet</p>
-              <p className="text-xs text-gray-400 text-center mt-1">Start by contacting a seller</p>
+              <p className="text-sm text-gray-500 text-center">{lang === 'zh' ? '暂无会话' : 'No conversations yet'}</p>
+              <p className="text-xs text-gray-400 text-center mt-1">{lang === 'zh' ? '先联系卖家开始聊天' : 'Start by contacting a seller'}</p>
             </div>
           ) : (
             <div className="p-2">
@@ -226,7 +228,7 @@ const MessagesPage: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-emerald-900 truncate">
-                          {thread.participantName || 'Unknown User'}
+                          {thread.participantName || (lang === 'zh' ? '未知用户' : 'Unknown User')}
                         </h3>
                         {thread.unreadCount > 0 && (
                           <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2">
@@ -238,7 +240,7 @@ const MessagesPage: React.FC = () => {
                         {thread.lastMessage || 'No messages yet'}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {thread.lastMessageTime || 'Now'}
+                        {thread.lastMessageTime || (lang === 'zh' ? '刚刚' : 'Now')}
                       </p>
                     </div>
                   </div>
@@ -257,13 +259,13 @@ const MessagesPage: React.FC = () => {
             <div className="p-6 border-b border-emerald-200 bg-white shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center text-white font-semibold">
-                  {(selectedThread?.participantName || 'New Chat').charAt(0).toUpperCase()}
+                  {(selectedThread?.participantName || (lang === 'zh' ? '新会话' : 'New Chat')).charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h3 className="font-semibold text-emerald-900">
-                    {selectedThread?.participantName || 'New Conversation'}
+                    {selectedThread?.participantName || (lang === 'zh' ? '新会话' : 'New Conversation')}
                   </h3>
-                  <p className="text-sm text-gray-500">Online</p>
+                  <p className="text-sm text-gray-500">{lang === 'zh' ? '在线' : 'Online'}</p>
                 </div>
               </div>
             </div>
@@ -274,7 +276,7 @@ const MessagesPage: React.FC = () => {
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <div className="text-center">
                     <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Start a conversation</p>
+                    <p className="text-sm">{lang === 'zh' ? '开始聊天吧' : 'Start a conversation'}</p>
                   </div>
                 </div>
               ) : (
@@ -331,7 +333,7 @@ const MessagesPage: React.FC = () => {
                       handleSendMessage();
                     }
                   }}
-                  placeholder={selectedThread ? 'Type your message...' : 'Send first message to start this conversation...'}
+                  placeholder={selectedThread ? (lang === 'zh' ? '输入消息...' : 'Type your message...') : (lang === 'zh' ? '发送第一条消息以开始会话...' : 'Send first message to start this conversation...')}
                   disabled={sending}
                   className="flex-1 px-4 py-2 rounded-lg border border-emerald-200 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
                 />
@@ -353,7 +355,7 @@ const MessagesPage: React.FC = () => {
           <div className="flex-1 flex items-center justify-center text-gray-500">
             <div className="text-center">
               <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Select a conversation to start messaging</p>
+              <p className="text-sm">{lang === 'zh' ? '请选择会话开始聊天' : 'Select a conversation to start messaging'}</p>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
 import { ApiError, apiClient, Category, Favorite, Item } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ListItemsParams {
   categoryId?: string;
@@ -16,6 +17,7 @@ const CategoryPage: React.FC = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { lang } = useLanguage();
 
   // State
   const [products, setProducts] = useState<Item[]>([]);
@@ -103,7 +105,7 @@ const CategoryPage: React.FC = () => {
         setProducts(response.data || []);
         setTotalCount(response.meta?.total || 0);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch items');
+        setError(err instanceof Error ? err.message : (lang === 'zh' ? '加载商品失败' : 'Failed to fetch items'));
         setProducts([]);
       } finally {
         setLoading(false);
@@ -111,7 +113,7 @@ const CategoryPage: React.FC = () => {
     };
 
     fetchCategoryItems();
-  }, [categoryName, categoriesLoading, matchedCategory, isAllCategory, page, sortBy, sortOrder]);
+  }, [categoryName, categoriesLoading, matchedCategory, isAllCategory, lang, page, sortBy, sortOrder]);
 
   const handleNavigateBack = () => {
     navigate('/');
@@ -149,14 +151,14 @@ const CategoryPage: React.FC = () => {
           aria-label="Go back"
         >
           <ChevronLeft className="h-6 w-6 mr-2" />
-          <span className="text-lg">Back</span>
+          <span className="text-lg">{lang === 'zh' ? '返回' : 'Back'}</span>
         </button>
 
         {/* Category Header with Title and Filters */}
         <div className="bg-white rounded-3xl p-8 mb-8 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl md:text-5xl font-bold text-green-800">
-              {(isAllCategory ? 'All Products' : (matchedCategory?.name || categoryName || '')).toUpperCase()}
+              {(isAllCategory ? (lang === 'zh' ? '全部商品' : 'All Products') : (matchedCategory?.name || categoryName || '')).toUpperCase()}
             </h1>
             <div className="flex gap-4">
               <div className="relative">
@@ -170,9 +172,9 @@ const CategoryPage: React.FC = () => {
                   }}
                   className="appearance-none px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 cursor-pointer hover:border-gray-400 focus:outline-none focus:border-green-500"
                 >
-                  <option value="createdAt-desc">最新上架</option>
-                  <option value="price-asc">价格: 低到高</option>
-                  <option value="price-desc">价格: 高到低</option>
+                  <option value="createdAt-desc">{lang === 'zh' ? '最新上架' : 'Newest'}</option>
+                  <option value="price-asc">{lang === 'zh' ? '价格: 低到高' : 'Price: Low to High'}</option>
+                  <option value="price-desc">{lang === 'zh' ? '价格: 高到低' : 'Price: High to Low'}</option>
                 </select>
               </div>
             </div>
@@ -183,7 +185,7 @@ const CategoryPage: React.FC = () => {
         {loading && (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader className="h-8 w-8 text-green-600 animate-spin mb-3" />
-            <p className="text-gray-600">加载中...</p>
+            <p className="text-gray-600">{lang === 'zh' ? '加载中...' : 'Loading...'}</p>
           </div>
         )}
 
@@ -192,7 +194,7 @@ const CategoryPage: React.FC = () => {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-red-800">加载失败</h3>
+              <h3 className="font-medium text-red-800">{lang === 'zh' ? '加载失败' : 'Load Failed'}</h3>
               <p className="text-sm text-red-700 mt-1">{error}</p>
             </div>
           </div>
@@ -202,13 +204,13 @@ const CategoryPage: React.FC = () => {
         {!loading && products.length === 0 && !error && (
           <div className="flex flex-col items-center justify-center py-12">
             <ShoppingBag className="h-12 w-12 text-gray-400 mb-3" />
-            <h3 className="text-lg font-medium text-gray-700">未找到商品</h3>
-            <p className="text-gray-500 mt-1 text-sm">该分类暂时没有可用商品</p>
+            <h3 className="text-lg font-medium text-gray-700">{lang === 'zh' ? '未找到商品' : 'No products found'}</h3>
+            <p className="text-gray-500 mt-1 text-sm">{lang === 'zh' ? '该分类暂时没有可用商品' : 'No available products in this category yet'}</p>
             <button
               onClick={handleNavigateBack}
               className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
             >
-              返回首页
+              {lang === 'zh' ? '返回首页' : 'Back to Home'}
             </button>
           </div>
         )}
@@ -286,17 +288,17 @@ const CategoryPage: React.FC = () => {
                 disabled={page === 1}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                上一页
+                {lang === 'zh' ? '上一页' : 'Prev'}
               </button>
               <span className="text-sm text-gray-600">
-                第 {page} 页，共 {Math.ceil(totalCount / pageSize)} 页
+                {lang === 'zh' ? `第 ${page} 页，共 ${Math.ceil(totalCount / pageSize)} 页` : `Page ${page} of ${Math.ceil(totalCount / pageSize)}`}
               </span>
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page >= Math.ceil(totalCount / pageSize)}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                下一页
+                {lang === 'zh' ? '下一页' : 'Next'}
               </button>
             </div>
           </>

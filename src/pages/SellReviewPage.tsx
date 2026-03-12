@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ItemData {
   title: string;
@@ -19,6 +20,7 @@ interface ItemData {
 const SellReviewPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { lang } = useLanguage();
   const itemData = (location.state as { draft?: ItemData } | null)?.draft;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,12 +31,14 @@ const SellReviewPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 py-12">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-lg text-emerald-900 mb-4">No draft data found. Please fill the sell form first.</p>
+          <p className="text-lg text-emerald-900 mb-4">
+            {lang === 'zh' ? '未找到草稿数据，请先填写发布表单。' : 'No draft data found. Please fill the sell form first.'}
+          </p>
           <button
             onClick={() => navigate('/sell')}
             className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           >
-            Back to Sell Form
+            {lang === 'zh' ? '返回发布页' : 'Back to Sell Form'}
           </button>
         </div>
       </div>
@@ -44,12 +48,12 @@ const SellReviewPage: React.FC = () => {
   const handleAccept = async () => {
     if (!itemData) return;
     if (!itemData.categoryId) {
-      setError('Category is required. Please go back and choose a category.');
+      setError(lang === 'zh' ? '分类不能为空，请返回上一页选择分类。' : 'Category is required. Please go back and choose a category.');
       return;
     }
     const hasBase64Image = itemData.images.some((image) => image.startsWith('data:image/'));
     if (hasBase64Image) {
-      setError('Detected local preview images. Please go back to Sell page and re-upload images before publishing.');
+      setError(lang === 'zh' ? '检测到本地预览图片，请返回发布页重新上传后再发布。' : 'Detected local preview images. Please go back to Sell page and re-upload images before publishing.');
       return;
     }
 
@@ -67,7 +71,7 @@ const SellReviewPage: React.FC = () => {
       });
       navigate(`/product/${response.data.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to publish item');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '发布商品失败' : 'Failed to publish item'));
     } finally {
       setSubmitting(false);
     }
@@ -83,14 +87,14 @@ const SellReviewPage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="inline-block bg-emerald-50 border-2 border-emerald-200 rounded-full px-8 md:px-12 py-3 md:py-4 shadow-[0_8px_0_rgba(16,185,129,0.08)]">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-800">Sell Your Item</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-800">{lang === 'zh' ? '发布商品' : 'Sell Your Item'}</h1>
           </div>
         </div>
 
         {/* Basic Information Section */}
         <div className="mb-6">
           <div className="inline-block bg-emerald-100/60 rounded-full px-6 md:px-8 py-2 md:py-3 text-sm md:text-base shadow-inner text-emerald-800">
-            Basic Information
+            {lang === 'zh' ? '基本信息' : 'Basic Information'}
           </div>
         </div>
 
@@ -133,28 +137,28 @@ const SellReviewPage: React.FC = () => {
               {/* Info */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-white rounded-lg p-4">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Price</p>
+                  <p className="text-xs md:text-sm text-gray-600">{lang === 'zh' ? '价格' : 'Price'}</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
                     ${itemData.currentPrice.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Condition</p>
+                  <p className="text-xs md:text-sm text-gray-600">{lang === 'zh' ? '成色' : 'Condition'}</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
                     {itemData.condition}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Category</p>
+                  <p className="text-xs md:text-sm text-gray-600">{lang === 'zh' ? '分类' : 'Category'}</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
                     {itemData.categoryName || itemData.categoryId}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-1 mb-6 text-sm text-emerald-800">
-                {itemData.originalPrice !== undefined && <p>Original price: ${itemData.originalPrice.toFixed(2)}</p>}
-                <p>Auto reduce after 7 days: {itemData.autoPriceReduce ? 'Yes' : 'No'}</p>
-                <p>Auto donation after 30 days: {itemData.autoDonation ? 'Yes' : 'No'}</p>
+                {itemData.originalPrice !== undefined && <p>{lang === 'zh' ? `原价：$${itemData.originalPrice.toFixed(2)}` : `Original price: $${itemData.originalPrice.toFixed(2)}`}</p>}
+                <p>{lang === 'zh' ? '7天后自动降价：' : 'Auto reduce after 7 days: '}{itemData.autoPriceReduce ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
+                <p>{lang === 'zh' ? '30天后自动捐赠：' : 'Auto donation after 30 days: '}{itemData.autoDonation ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
               </div>
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
@@ -170,13 +174,13 @@ const SellReviewPage: React.FC = () => {
                   disabled={submitting}
                   className="flex-1 px-6 py-2 md:py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-full transition-colors shadow-md text-sm md:text-base"
                 >
-                  {submitting ? <span className="inline-flex items-center gap-2"><Loader className="h-4 w-4 animate-spin" />Publishing...</span> : 'Accept'}
+                  {submitting ? <span className="inline-flex items-center gap-2"><Loader className="h-4 w-4 animate-spin" />{lang === 'zh' ? '发布中...' : 'Publishing...'}</span> : (lang === 'zh' ? '确认发布' : 'Accept')}
                 </button>
                 <button
                   onClick={handleRevise}
                   className="flex-1 px-6 py-2 md:py-3 bg-emerald-400 hover:bg-emerald-500 text-white font-medium rounded-full transition-colors shadow-md text-sm md:text-base"
                 >
-                  Revise
+                  {lang === 'zh' ? '返回修改' : 'Revise'}
                 </button>
               </div>
             </div>

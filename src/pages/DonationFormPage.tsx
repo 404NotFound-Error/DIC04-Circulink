@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Loader, AlertCircle, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const DonationFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form state
@@ -47,18 +49,18 @@ const DonationFormPage: React.FC = () => {
     
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/')) {
-        setError('Only image files are allowed');
+        setError(lang === 'zh' ? '仅支持图片文件' : 'Only image files are allowed');
         return false;
       }
       if (file.size > 10 * 1024 * 1024) {
-        setError('Image size must be less than 10MB');
+        setError(lang === 'zh' ? '图片需小于 10MB' : 'Image size must be less than 10MB');
         return false;
       }
       return true;
     });
 
     if (validFiles.length + selectedFiles.length > 5) {
-      setError('Maximum 5 images allowed');
+      setError(lang === 'zh' ? '最多上传 5 张图片' : 'Maximum 5 images allowed');
       return;
     }
 
@@ -89,7 +91,7 @@ const DonationFormPage: React.FC = () => {
         urls.push(data.data.path);
       } catch (err) {
         console.error('Image upload error:', err);
-        throw new Error('Failed to upload image');
+        throw new Error(lang === 'zh' ? '上传图片失败' : 'Failed to upload image');
       }
     }
 
@@ -98,27 +100,27 @@ const DonationFormPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!user) {
-      setError('Please log in to donate items');
+      setError(lang === 'zh' ? '请先登录后再捐赠' : 'Please log in to donate items');
       return;
     }
 
     if (!description.trim()) {
-      setError('Please describe your donation');
+      setError(lang === 'zh' ? '请填写捐赠描述' : 'Please describe your donation');
       return;
     }
 
     if (selectedFiles.length === 0) {
-      setError('Please add at least one image');
+      setError(lang === 'zh' ? '请至少上传一张图片' : 'Please add at least one image');
       return;
     }
 
     if (!agreeBring || !agreeClean) {
-      setError('Please agree to all donation terms');
+      setError(lang === 'zh' ? '请勾选并同意所有捐赠条款' : 'Please agree to all donation terms');
       return;
     }
 
     if (!donationCategoryId) {
-      setError('Category not loaded, please try again');
+      setError(lang === 'zh' ? '分类未加载完成，请稍后重试' : 'Category not loaded, please try again');
       return;
     }
 
@@ -145,7 +147,7 @@ const DonationFormPage: React.FC = () => {
       // Navigate to thank you page
       navigate('/donation/thanks');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit donation');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '提交捐赠失败' : 'Failed to submit donation'));
     } finally {
       setSubmitting(false);
       setUploading(false);
@@ -162,14 +164,14 @@ const DonationFormPage: React.FC = () => {
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             disabled={submitting || uploading}
           >
-            Back
+            {lang === 'zh' ? '返回' : 'Back'}
           </button>
         </div>
 
         <div className="mb-8 flex justify-center">
           <div className="inline-block bg-emerald-50 border-2 border-emerald-200 rounded-full px-12 py-4 shadow-[0_8px_0_rgba(16,185,129,0.08)]">
             <h1 className="text-3xl md:text-4xl font-bold text-emerald-800">
-              Give Your Items a Second Life
+              {lang === 'zh' ? '让物品焕发第二次生命' : 'Give Your Items a Second Life'}
             </h1>
           </div>
         </div>
@@ -184,7 +186,7 @@ const DonationFormPage: React.FC = () => {
 
         <div className="mb-8">
           <div className="inline-block bg-emerald-100/60 rounded-full px-8 py-3 shadow-inner text-emerald-800">
-            Basic Information
+            {lang === 'zh' ? '基本信息' : 'Basic Information'}
           </div>
         </div>
 
@@ -226,7 +228,7 @@ const DonationFormPage: React.FC = () => {
                     disabled={submitting || uploading}
                     className="w-full bg-emerald-100/60 rounded-xl p-8 flex items-center justify-center border-2 border-dashed border-emerald-300 hover:border-emerald-400 transition-colors"
                   >
-                    <span className="text-emerald-900">+ Add More ({previewUrls.length}/5)</span>
+                    <span className="text-emerald-900">+ {lang === 'zh' ? '继续添加' : 'Add More'} ({previewUrls.length}/5)</span>
                   </button>
                 )}
               </div>
@@ -238,8 +240,8 @@ const DonationFormPage: React.FC = () => {
                   className="flex flex-col items-center gap-3 text-emerald-900"
                 >
                   <ImageIcon className="h-12 w-12" />
-                  <span className="text-lg">Add your images</span>
-                  <span className="text-sm text-emerald-700">Max 5 images • 10MB each</span>
+                  <span className="text-lg">{lang === 'zh' ? '添加图片' : 'Add your images'}</span>
+                  <span className="text-sm text-emerald-700">{lang === 'zh' ? '最多5张 • 每张10MB' : 'Max 5 images • 10MB each'}</span>
                 </button>
               </div>
             )}
@@ -251,20 +253,20 @@ const DonationFormPage: React.FC = () => {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your goods... (What are you donating? Condition? Any special notes?)"
+                placeholder={lang === 'zh' ? '描述捐赠物品...(捐赠什么、成色、补充说明等)' : 'Describe your goods... (What are you donating? Condition? Any special notes?)'}
                 className="w-full h-full bg-transparent resize-none outline-none text-emerald-800 placeholder:opacity-80"
                 disabled={submitting || uploading}
               />
             </div>
             <p className="mt-2 text-sm text-emerald-700 text-right">
-              {description.length}/1000 characters
+              {description.length}/1000 {lang === 'zh' ? '字' : 'characters'}
             </p>
           </div>
         </div>
 
         <div className="mb-6">
           <div className="inline-block bg-emerald-100/60 rounded-full px-8 py-3 shadow-inner text-emerald-800">
-            Donation Agreement
+            {lang === 'zh' ? '捐赠协议' : 'Donation Agreement'}
           </div>
         </div>
 
@@ -278,7 +280,9 @@ const DonationFormPage: React.FC = () => {
               disabled={submitting || uploading}
             />
             <span className="text-emerald-800">
-              I agree to bring the donated item to the designated campus collection area at the end of the semester.
+              {lang === 'zh'
+                ? '我同意在学期末将捐赠物品带到校园指定回收点。'
+                : 'I agree to bring the donated item to the designated campus collection area at the end of the semester.'}
             </span>
           </label>
 
@@ -291,7 +295,9 @@ const DonationFormPage: React.FC = () => {
               disabled={submitting || uploading}
             />
             <span className="text-emerald-800">
-              I confirm that all donated items are in clean and usable condition.
+              {lang === 'zh'
+                ? '我确认所有捐赠物品均为清洁且可使用状态。'
+                : 'I confirm that all donated items are in clean and usable condition.'}
             </span>
           </label>
         </div>
@@ -304,7 +310,7 @@ const DonationFormPage: React.FC = () => {
           >
             {uploading && <Loader className="h-5 w-5 animate-spin" />}
             {submitting && !uploading && <Loader className="h-5 w-5 animate-spin" />}
-            {uploading ? 'Uploading Images...' : submitting ? 'Submitting...' : 'Confirm Donation'}
+            {uploading ? (lang === 'zh' ? '上传图片中...' : 'Uploading Images...') : submitting ? (lang === 'zh' ? '提交中...' : 'Submitting...') : (lang === 'zh' ? '确认捐赠' : 'Confirm Donation')}
           </button>
         </div>
 

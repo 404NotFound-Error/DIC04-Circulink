@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, Github } from 'lucide-react';
 import { Project, Theme } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProjectsSectionProps {
   projects: Project[];
@@ -8,6 +9,7 @@ interface ProjectsSectionProps {
 }
 
 const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, currentTheme }) => {
+  const { lang } = useLanguage();
   const textColor = currentTheme.id === 'midnight' ? 'text-white' : 'text-gray-800';
   const subtextColor = currentTheme.id === 'midnight' ? 'text-gray-300' : 'text-gray-600';
   const cardBg = currentTheme.id === 'midnight' ? 'bg-white/10' : 'bg-white/80';
@@ -16,9 +18,9 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, currentThem
     <section id="projects" className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className={`text-4xl font-bold mb-4 ${textColor}`}>Featured Projects</h2>
+          <h2 className={`text-4xl font-bold mb-4 ${textColor}`}>{lang === 'zh' ? '精选项目' : 'Featured Projects'}</h2>
           <p className={`text-xl ${subtextColor} max-w-2xl mx-auto`}>
-            A showcase of my recent work and creative solutions
+            {lang === 'zh' ? '展示我最近完成的工作与创意方案' : 'A showcase of my recent work and creative solutions'}
           </p>
         </div>
 
@@ -55,7 +57,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, currentThem
                     className={`flex items-center gap-1 px-3 py-2 ${cardBg} hover:bg-white/30 rounded-lg transition-colors ${textColor} text-sm`}
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Live Demo
+                    {lang === 'zh' ? '在线演示' : 'Live Demo'}
                   </a>
                 )}
                 {project.github && (
@@ -66,7 +68,7 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, currentThem
                     className={`flex items-center gap-1 px-3 py-2 ${cardBg} hover:bg-white/30 rounded-lg transition-colors ${textColor} text-sm`}
                   >
                     <Github className="h-4 w-4" />
-                    Code
+                    {lang === 'zh' ? '代码' : 'Code'}
                   </a>
                 )}
               </div>

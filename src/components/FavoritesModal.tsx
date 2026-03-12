@@ -3,6 +3,7 @@ import { X, Heart, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient, Favorite } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FavoritesModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface FavoritesModalProps {
 
 const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,12 +27,12 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
       const response = await apiClient.getFavorites();
       setFavorites(response.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load favorites');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '加载收藏失败' : 'Failed to load favorites'));
       setFavorites([]);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [lang, user]);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -60,7 +62,7 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
         <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
           <div className="flex items-center space-x-2">
             <Heart className="h-6 w-6 text-red-500" />
-            <h2 className="text-2xl font-bold text-gray-900">My Favorites</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{lang === 'zh' ? '我的收藏' : 'My Favorites'}</h2>
             {favorites.length > 0 && (
               <span className="ml-2 text-sm text-gray-500">({favorites.length})</span>
             )}
@@ -90,8 +92,8 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
           {!loading && !error && favorites.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
               <ShoppingBag className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No favorites yet</h3>
-              <p className="text-gray-500 text-sm mb-4">Start exploring and save your favorite items!</p>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">{lang === 'zh' ? '暂无收藏' : 'No favorites yet'}</h3>
+              <p className="text-gray-500 text-sm mb-4">{lang === 'zh' ? '去逛逛并收藏你喜欢的商品吧！' : 'Start exploring and save your favorite items!'}</p>
               <button
                 onClick={() => {
                   onClose();
@@ -99,7 +101,7 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
                 }}
                 className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
               >
-                Browse Products
+                {lang === 'zh' ? '浏览商品' : 'Browse Products'}
               </button>
             </div>
           )}

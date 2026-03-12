@@ -15,7 +15,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onSortChange,
   onFilterToggle
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
@@ -30,7 +30,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
               className="lg:hidden flex items-center space-x-2 px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
             >
               <Filter className="h-4 w-4" />
-              <span>Filters</span>
+              <span>{lang === 'zh' ? '筛选' : 'Filters'}</span>
             </button>
           )}
         </div>

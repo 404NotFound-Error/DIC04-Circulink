@@ -1,12 +1,14 @@
 import React from 'react';
 import { Github, Linkedin, Mail, Download } from 'lucide-react';
 import { Theme } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeroProps {
   currentTheme: Theme;
 }
 
 const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
+  const { lang } = useLanguage();
   const textColor = currentTheme.id === 'midnight' ? 'text-white' : 'text-gray-800';
   const subtextColor = currentTheme.id === 'midnight' ? 'text-gray-300' : 'text-gray-600';
 
@@ -23,22 +25,23 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
             Alex Johnson
           </h1>
           <p className={`text-xl md:text-2xl mb-6 ${subtextColor}`}>
-            Full-Stack Developer & Creative Problem Solver
+            {lang === 'zh' ? '全栈开发者与创意问题解决者' : 'Full-Stack Developer & Creative Problem Solver'}
           </p>
           <p className={`text-lg max-w-2xl mx-auto mb-8 leading-relaxed ${subtextColor}`}>
-            I craft beautiful, functional web experiences that bridge the gap between design and technology. 
-            Passionate about creating solutions that make a difference.
+            {lang === 'zh'
+              ? '我专注打造兼顾美感与实用性的 Web 体验，连接设计与技术。热衷于创造真正有影响力的解决方案。'
+              : 'I craft beautiful, functional web experiences that bridge the gap between design and technology. Passionate about creating solutions that make a difference.'}
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105 flex items-center space-x-2">
             <Mail className="h-5 w-5" />
-            <span>Get In Touch</span>
+            <span>{lang === 'zh' ? '联系我' : 'Get In Touch'}</span>
           </button>
           <button className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105 flex items-center space-x-2 border border-white/20">
             <Download className="h-5 w-5" />
-            <span>Download CV</span>
+            <span>{lang === 'zh' ? '下载简历' : 'Download CV'}</span>
           </button>
         </div>
 

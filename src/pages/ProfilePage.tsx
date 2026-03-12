@@ -14,7 +14,7 @@ interface Favorite {
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { profile, isAuthenticated, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'items' | 'favorites'>('info');
   const [isEditing, setIsEditing] = useState(false);
@@ -101,7 +101,7 @@ const ProfilePage: React.FC = () => {
 
   const handleSave = async () => {
     if (!editForm.name.trim()) {
-      setError('Name is required');
+      setError(lang === 'zh' ? '姓名不能为空' : 'Name is required');
       return;
     }
 
@@ -116,7 +116,7 @@ const ProfilePage: React.FC = () => {
       await refreshProfile();
       setIsEditing(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '更新资料失败' : 'Failed to update profile'));
     } finally {
       setLoading(false);
     }
@@ -127,12 +127,12 @@ const ProfilePage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(to bottom, #b4edc6, #bfe7e5)' }}>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('profile')}</h1>
-          <p className="text-gray-600 mb-6">Please sign in to view your profile</p>
+          <p className="text-gray-600 mb-6">{lang === 'zh' ? '请先登录后查看个人资料' : 'Please sign in to view your profile'}</p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
           >
-            Back to Home
+            {lang === 'zh' ? '返回首页' : 'Back to Home'}
           </button>
         </div>
       </div>
@@ -146,7 +146,7 @@ const ProfilePage: React.FC = () => {
           onClick={() => navigate('/')}
           className="mb-6 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          ← Back
+          ← {t('back')}
         </button>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -160,7 +160,7 @@ const ProfilePage: React.FC = () => {
               />
               <div className="text-white text-center sm:text-left">
                 <h1 className="text-2xl sm:text-3xl font-bold">{profile?.full_name}</h1>
-                <p className="text-orange-100 text-sm">{profile?.university || 'No university set'}</p>
+                <p className="text-orange-100 text-sm">{profile?.university || (lang === 'zh' ? '未设置学校' : 'No university set')}</p>
               </div>
             </div>
           </div>
@@ -249,7 +249,7 @@ const ProfilePage: React.FC = () => {
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder="Enter your name"
+                        placeholder={lang === 'zh' ? '请输入姓名' : 'Enter your name'}
                       />
                     ) : (
                       <p className="text-gray-900">{profile?.full_name}</p>
@@ -259,7 +259,7 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                     <p className="text-gray-900">{profile?.email || t('notProvided')}</p>
-                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                    <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '邮箱不可修改' : 'Email cannot be changed'}</p>
                   </div>
 
                   <div>
@@ -270,10 +270,10 @@ const ProfilePage: React.FC = () => {
                         value={editForm.university}
                         onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder="Enter your university"
+                        placeholder={lang === 'zh' ? '请输入学校' : 'Enter your university'}
                       />
                     ) : (
-                      <p className="text-gray-900">{profile?.university || 'Not provided'}</p>
+                      <p className="text-gray-900">{profile?.university || t('notProvided')}</p>
                     )}
                   </div>
 
@@ -285,10 +285,10 @@ const ProfilePage: React.FC = () => {
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder="Enter your phone number"
+                        placeholder={lang === 'zh' ? '请输入手机号' : 'Enter your phone number'}
                       />
                     ) : (
-                      <p className="text-gray-900">{profile?.phone || 'Not provided'}</p>
+                      <p className="text-gray-900">{profile?.phone || t('notProvided')}</p>
                     )}
                   </div>
                 </div>
@@ -334,12 +334,12 @@ const ProfilePage: React.FC = () => {
                 {itemsLoading ? (
                   <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                    <p className="mt-2 text-gray-600">Loading items...</p>
+                    <p className="mt-2 text-gray-600">{lang === 'zh' ? '正在加载商品...' : 'Loading items...'}</p>
                   </div>
                 ) : myItems.length === 0 ? (
                   <div className="text-center py-12">
                     <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">You haven't listed any items yet</p>
+                    <p className="text-gray-600 mb-4">{lang === 'zh' ? '你还没有发布商品' : "You haven't listed any items yet"}</p>
                     <button
                       onClick={() => navigate('/sell')}
                       className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -362,7 +362,7 @@ const ProfilePage: React.FC = () => {
                           }}
                           className="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-white/95 text-gray-700 border border-gray-200 hover:bg-white text-xs font-medium"
                         >
-                          Edit
+                          {t('edit')}
                         </button>
                         <img
                           src={item.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
@@ -395,12 +395,12 @@ const ProfilePage: React.FC = () => {
                 {favoritesLoading ? (
                   <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                    <p className="mt-2 text-gray-600">Loading favorites...</p>
+                    <p className="mt-2 text-gray-600">{lang === 'zh' ? '正在加载收藏...' : 'Loading favorites...'}</p>
                   </div>
                 ) : myFavorites.length === 0 ? (
                   <div className="text-center py-12">
                     <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">You haven't favorited any items yet</p>
+                    <p className="text-gray-600 mb-4">{lang === 'zh' ? '你还没有收藏商品' : "You haven't favorited any items yet"}</p>
                     <button
                       onClick={() => navigate('/products')}
                       className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"

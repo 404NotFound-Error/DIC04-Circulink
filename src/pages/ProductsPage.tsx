@@ -4,6 +4,7 @@ import { Loader, AlertCircle, ShoppingBag } from 'lucide-react';
 import Layout from '../components/Layout';
 import ProductGrid from '../components/ProductGrid';
 import { apiClient, Item } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ListItemsParams {
   categoryId?: string;
@@ -25,6 +26,7 @@ interface ProductsPageProps {
 const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { lang } = useLanguage();
 
   // State management
   const [items, setItems] = useState<Item[]>([]);
@@ -77,7 +79,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
         setTotalCount(response.meta?.total || 0);
         console.log('✅ Items loaded:', response.data?.length || 0);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch items';
+        const errorMessage = err instanceof Error ? err.message : (lang === 'zh' ? '加载商品失败' : 'Failed to fetch items');
         setError(errorMessage);
         setItems([]);
         console.error('❌ Error fetching items:', errorMessage);
@@ -87,7 +89,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
     };
 
     fetchItems();
-  }, [searchQuery, minPrice, maxPrice, condition, sortBy, sortOrder, page]);
+  }, [condition, lang, maxPrice, minPrice, page, searchQuery, sortBy, sortOrder]);
 
   // Handle product click
   const handleProductClick = (id: string) => {
@@ -101,7 +103,9 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
         {searchQuery && (
           <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
             <p className="text-sm text-blue-800">
-              搜索结果: "<strong>{searchQuery}</strong>" ({totalCount} 件商品)
+              {lang === 'zh'
+                ? <>搜索结果: "<strong>{searchQuery}</strong>" ({totalCount} 件商品)</>
+                : <>Search results: "<strong>{searchQuery}</strong>" ({totalCount} items)</>}
             </p>
           </div>
         )}
@@ -113,7 +117,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
               {/* Price Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  最低价格
+                  {lang === 'zh' ? '最低价格' : 'Min Price'}
                 </label>
                 <input
                   type="number"
@@ -129,7 +133,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  最高价格
+                  {lang === 'zh' ? '最高价格' : 'Max Price'}
                 </label>
                 <input
                   type="number"
@@ -146,7 +150,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
               {/* Condition */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  商品状况
+                  {lang === 'zh' ? '商品状况' : 'Condition'}
                 </label>
                 <select
                   value={condition || ''}
@@ -156,18 +160,18 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
                 >
-                  <option value="">全部</option>
-                  <option value="EXCELLENT">全新</option>
-                  <option value="GOOD">良好</option>
-                  <option value="FAIR">一般</option>
-                  <option value="POOR">需维修</option>
+                  <option value="">{lang === 'zh' ? '全部' : 'All'}</option>
+                  <option value="EXCELLENT">{lang === 'zh' ? '全新' : 'Excellent'}</option>
+                  <option value="GOOD">{lang === 'zh' ? '良好' : 'Good'}</option>
+                  <option value="FAIR">{lang === 'zh' ? '一般' : 'Fair'}</option>
+                  <option value="POOR">{lang === 'zh' ? '需维修' : 'Needs Repair'}</option>
                 </select>
               </div>
 
               {/* Sort */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  排序方式
+                  {lang === 'zh' ? '排序方式' : 'Sort By'}
                 </label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
@@ -179,9 +183,9 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-green-500"
                 >
-                  <option value="createdAt-desc">最新上架</option>
-                  <option value="price-asc">价格: 低到高</option>
-                  <option value="price-desc">价格: 高到低</option>
+                  <option value="createdAt-desc">{lang === 'zh' ? '最新上架' : 'Newest'}</option>
+                  <option value="price-asc">{lang === 'zh' ? '价格: 低到高' : 'Price: Low to High'}</option>
+                  <option value="price-desc">{lang === 'zh' ? '价格: 高到低' : 'Price: High to Low'}</option>
                 </select>
               </div>
 
@@ -198,7 +202,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
                   }}
                   className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
-                  重置筛选
+                  {lang === 'zh' ? '重置筛选' : 'Reset Filters'}
                 </button>
               </div>
             </div>
@@ -208,7 +212,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader className="h-8 w-8 text-green-600 animate-spin mb-3" />
-              <p className="text-gray-600">加载中...</p>
+              <p className="text-gray-600">{lang === 'zh' ? '加载中...' : 'Loading...'}</p>
             </div>
           )}
 
@@ -217,7 +221,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-medium text-red-800">加载失败</h3>
+                <h3 className="font-medium text-red-800">{lang === 'zh' ? '加载失败' : 'Load Failed'}</h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
               </div>
             </div>
@@ -227,18 +231,18 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
           {!loading && items.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-12">
               <ShoppingBag className="h-12 w-12 text-gray-400 mb-3" />
-              <h3 className="text-lg font-medium text-gray-700">未找到商品</h3>
+              <h3 className="text-lg font-medium text-gray-700">{lang === 'zh' ? '未找到商品' : 'No products found'}</h3>
               <p className="text-gray-500 mt-1 text-sm">
                 {searchQuery
-                  ? `没有找到与"${searchQuery}"匹配的商品`
-                  : '暂时没有可用商品'}
+                  ? (lang === 'zh' ? `没有找到与"${searchQuery}"匹配的商品` : `No products matched "${searchQuery}"`)
+                  : (lang === 'zh' ? '暂时没有可用商品' : 'No products available')}
               </p>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
                   className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
-                  清除搜索
+                  {lang === 'zh' ? '清除搜索' : 'Clear Search'}
                 </button>
               )}
             </div>
@@ -256,17 +260,17 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ searchQuery: initialSearch 
                   disabled={page === 1}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  上一页
+                  {lang === 'zh' ? '上一页' : 'Prev'}
                 </button>
                 <span className="text-sm text-gray-600">
-                  第 {page} 页，共 {Math.ceil(totalCount / pageSize)} 页
+                  {lang === 'zh' ? `第 ${page} 页，共 ${Math.ceil(totalCount / pageSize)} 页` : `Page ${page} of ${Math.ceil(totalCount / pageSize)}`}
                 </span>
                 <button
                   onClick={() => setPage(page + 1)}
                   disabled={page >= Math.ceil(totalCount / pageSize)}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  下一页
+                  {lang === 'zh' ? '下一页' : 'Next'}
                 </button>
               </div>
             </>

@@ -21,7 +21,7 @@ const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +35,12 @@ const OrderDetailPage: React.FC = () => {
       const response = await apiClient.getOrderById(id);
       setOrder(response.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load order details');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '加载订单详情失败' : 'Failed to load order details'));
       console.error('Load order detail error:', err);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, lang]);
 
   useEffect(() => {
     if (id) {
@@ -56,7 +56,7 @@ const OrderDetailPage: React.FC = () => {
       await apiClient.updateOrderStatus(order.id, newStatus);
       await loadOrderDetail();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update order status');
+      alert(err instanceof Error ? err.message : (lang === 'zh' ? '更新订单状态失败' : 'Failed to update order status'));
       console.error('Update order status error:', err);
     } finally {
       setUpdating(false);
@@ -106,7 +106,7 @@ const OrderDetailPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
+    return new Date(dateString).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -116,7 +116,16 @@ const OrderDetailPage: React.FC = () => {
   };
 
   const formatStatus = (status: string) => {
-    return status.charAt(0) + status.slice(1).toLowerCase().replace('_', ' ');
+    const map: Record<string, { en: string; zh: string }> = {
+      PENDING: { en: 'Pending', zh: '待处理' },
+      ACCEPTED: { en: 'Accepted', zh: '已接受' },
+      REJECTED: { en: 'Rejected', zh: '已拒绝' },
+      PAID: { en: 'Paid', zh: '已支付' },
+      SHIPPED: { en: 'Shipped', zh: '已发货' },
+      COMPLETED: { en: 'Completed', zh: '已完成' },
+      CANCELLED: { en: 'Cancelled', zh: '已取消' }
+    };
+    return map[status]?.[lang] || status;
   };
 
   const isSeller = order && user && order.sellerId === user.id;
@@ -130,16 +139,16 @@ const OrderDetailPage: React.FC = () => {
     if (isSeller) {
       if (order.status === 'PENDING') {
         actions.push(
-          { label: 'Accept Order', status: 'ACCEPTED', color: 'bg-green-600 hover:bg-green-700' },
-          { label: 'Reject Order', status: 'REJECTED', color: 'bg-red-600 hover:bg-red-700' }
+          { label: t('acceptOrder'), status: 'ACCEPTED', color: 'bg-green-600 hover:bg-green-700' },
+          { label: t('rejectOrder'), status: 'REJECTED', color: 'bg-red-600 hover:bg-red-700' }
         );
       }
       if (order.status === 'PAID') {
-        actions.push({ label: 'Mark as Shipped', status: 'SHIPPED', color: 'bg-purple-600 hover:bg-purple-700' });
+        actions.push({ label: t('markAsShipped'), status: 'SHIPPED', color: 'bg-purple-600 hover:bg-purple-700' });
       }
       if (order.status === 'SHIPPED') {
         actions.push({
-          label: 'Mark as Completed',
+          label: t('completeOrder'),
           status: 'COMPLETED',
           color: 'bg-emerald-600 hover:bg-emerald-700'
         });
@@ -148,17 +157,17 @@ const OrderDetailPage: React.FC = () => {
 
     if (isBuyer) {
       if (order.status === 'ACCEPTED') {
-        actions.push({ label: 'Mark as Paid', status: 'PAID', color: 'bg-green-600 hover:bg-green-700' });
+        actions.push({ label: t('markAsPaid'), status: 'PAID', color: 'bg-green-600 hover:bg-green-700' });
       }
       if (order.status === 'SHIPPED') {
         actions.push({
-          label: 'Confirm Received',
+          label: t('confirmReceived'),
           status: 'COMPLETED',
           color: 'bg-emerald-600 hover:bg-emerald-700'
         });
       }
       if (['PENDING', 'ACCEPTED'].includes(order.status)) {
-        actions.push({ label: 'Cancel Order', status: 'CANCELLED', color: 'bg-gray-600 hover:bg-gray-700' });
+        actions.push({ label: t('cancelOrder'), status: 'CANCELLED', color: 'bg-gray-600 hover:bg-gray-700' });
       }
     }
 
@@ -170,7 +179,7 @@ const OrderDetailPage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Loading order details...</p>
+          <p className="text-gray-600">{lang === 'zh' ? '正在加载订单详情...' : 'Loading order details...'}</p>
         </div>
       </div>
     );
@@ -181,12 +190,12 @@ const OrderDetailPage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 flex items-center justify-center">
         <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <p className="text-lg text-gray-800 font-medium mb-4">{error || 'Order not found'}</p>
+          <p className="text-lg text-gray-800 font-medium mb-4">{error || (lang === 'zh' ? '订单不存在' : 'Order not found')}</p>
           <button
             onClick={() => navigate('/orders')}
             className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           >
-            Back to Orders
+            {lang === 'zh' ? '返回订单列表' : 'Back to Orders'}
           </button>
         </div>
       </div>
@@ -224,7 +233,7 @@ const OrderDetailPage: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Product Info */}
             <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-emerald-100">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Product Information</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">{lang === 'zh' ? '商品信息' : 'Product Information'}</h2>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Product Images */}
                 <div className="w-full sm:w-32 md:w-48 h-40 sm:h-48 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
@@ -243,7 +252,7 @@ const OrderDetailPage: React.FC = () => {
 
                 {/* Product Details */}
                 <div className="flex-1">
-                  <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">{order.item?.title || 'Product'}</h3>
+                  <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">{order.item?.title || (lang === 'zh' ? '商品' : 'Product')}</h3>
                   <div className="flex items-center gap-4 text-sm mb-4">
                     <span className="text-xl sm:text-2xl font-bold text-emerald-600">${order.item?.price?.toFixed(2) || '0.00'}</span>
                   </div>
@@ -251,7 +260,7 @@ const OrderDetailPage: React.FC = () => {
                     onClick={() => navigate(`/product/${order.itemId}`)}
                     className="w-full sm:w-auto px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
                   >
-                    View Product Page
+                    {lang === 'zh' ? '查看商品页面' : 'View Product Page'}
                   </button>
                 </div>
               </div>
@@ -259,14 +268,14 @@ const OrderDetailPage: React.FC = () => {
 
             {/* Order Timeline */}
             <div className="bg-white rounded-lg shadow-md p-6 border border-emerald-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Order Timeline</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{lang === 'zh' ? '订单时间线' : 'Order Timeline'}</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                     <Clock className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Order Created</p>
+                    <p className="font-semibold text-gray-900">{lang === 'zh' ? '订单已创建' : 'Order Created'}</p>
                     <p className="text-sm text-gray-600">{formatDate(order.createdAt)}</p>
                   </div>
                 </div>
@@ -277,8 +286,8 @@ const OrderDetailPage: React.FC = () => {
                     {getStatusIcon(order.status)}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Current Status: {formatStatus(order.status)}</p>
-                    <p className="text-sm text-gray-600">Last updated: {formatDate(order.updatedAt)}</p>
+                    <p className="font-semibold text-gray-900">{lang === 'zh' ? '当前状态' : 'Current Status'}: {formatStatus(order.status)}</p>
+                    <p className="text-sm text-gray-600">{lang === 'zh' ? '最近更新' : 'Last updated'}: {formatDate(order.updatedAt)}</p>
                   </div>
                 </div>
               </div>
@@ -287,7 +296,7 @@ const OrderDetailPage: React.FC = () => {
             {/* Actions */}
             {getAvailableActions().length > 0 && (
               <div className="bg-white rounded-lg shadow-md p-6 border border-emerald-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Available Actions</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{lang === 'zh' ? '可执行操作' : 'Available Actions'}</h2>
                 <div className="flex flex-wrap gap-3">
                   {getAvailableActions().map((action) => (
                     <button
@@ -296,7 +305,7 @@ const OrderDetailPage: React.FC = () => {
                       disabled={updating}
                       className={`px-6 py-2 text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed ${action.color}`}
                     >
-                      {updating ? 'Updating...' : action.label}
+                      {updating ? (lang === 'zh' ? '更新中...' : 'Updating...') : action.label}
                     </button>
                   ))}
                 </div>
@@ -308,21 +317,21 @@ const OrderDetailPage: React.FC = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Order Summary */}
             <div className="bg-white rounded-lg shadow-md p-6 border border-emerald-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{lang === 'zh' ? '订单摘要' : 'Order Summary'}</h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <Package className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">Order ID:</span>
+                  <span className="text-gray-600">{lang === 'zh' ? '订单号' : 'Order ID'}:</span>
                   <span className="font-mono text-xs text-gray-900">{order.id.slice(0, 12)}...</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">Total Amount:</span>
+                  <span className="text-gray-600">{t('total')}:</span>
                   <span className="font-bold text-lg text-emerald-600">${order.total.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">Order Date:</span>
+                  <span className="text-gray-600">{t('orderDate')}:</span>
                   <span className="font-medium text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -331,7 +340,7 @@ const OrderDetailPage: React.FC = () => {
             {/* Buyer Info */}
             {isSeller && order.buyer && (
               <div className="bg-white rounded-lg shadow-md p-6 border border-emerald-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Buyer Information</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('buyer')} {t('accountInfo')}</h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
@@ -345,7 +354,7 @@ const OrderDetailPage: React.FC = () => {
                     className="w-full mt-3 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    Contact Buyer
+                    {t('contactBuyer')}
                   </button>
                 </div>
               </div>
@@ -354,7 +363,7 @@ const OrderDetailPage: React.FC = () => {
             {/* Seller Info */}
             {isBuyer && order.seller && (
               <div className="bg-white rounded-lg shadow-md p-6 border border-emerald-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Seller Information</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('seller')} {t('accountInfo')}</h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
@@ -368,7 +377,7 @@ const OrderDetailPage: React.FC = () => {
                     className="w-full mt-3 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    Contact Seller
+                    {t('contactSeller')}
                   </button>
                 </div>
               </div>

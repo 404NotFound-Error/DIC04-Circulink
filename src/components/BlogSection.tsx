@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Search, Tag } from 'lucide-react';
 import { BlogPost, Theme } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface BlogSectionProps {
   posts: BlogPost[];
@@ -9,6 +10,7 @@ interface BlogSectionProps {
 }
 
 const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostClick }) => {
+  const { lang } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -29,9 +31,9 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostCl
     <section id="blog" className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className={`text-4xl font-bold mb-4 ${textColor}`}>Latest Articles</h2>
+          <h2 className={`text-4xl font-bold mb-4 ${textColor}`}>{lang === 'zh' ? '最新文章' : 'Latest Articles'}</h2>
           <p className={`text-xl ${subtextColor} max-w-2xl mx-auto`}>
-            Thoughts, tutorials, and insights from my journey in technology
+            {lang === 'zh' ? '记录我在技术道路上的思考、教程与洞察' : 'Thoughts, tutorials, and insights from my journey in technology'}
           </p>
         </div>
 
@@ -40,7 +42,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostCl
             <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${subtextColor}`} />
             <input
               type="text"
-              placeholder="Search articles..."
+              placeholder={lang === 'zh' ? '搜索文章...' : 'Search articles...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full pl-10 pr-4 py-2 ${cardBg} backdrop-blur-sm rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 ${textColor} placeholder-gray-500`}
@@ -56,7 +58,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostCl
                   : `${cardBg} ${textColor} hover:bg-white/20`
               }`}
             >
-              All
+              {lang === 'zh' ? '全部' : 'All'}
             </button>
             {allTags.map(tag => (
               <button
@@ -93,7 +95,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostCl
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  <span>{post.readTime} min read</span>
+                  <span>{lang === 'zh' ? `${post.readTime} 分钟阅读` : `${post.readTime} min read`}</span>
                 </div>
               </div>
 
@@ -114,7 +116,7 @@ const BlogSection: React.FC<BlogSectionProps> = ({ posts, currentTheme, onPostCl
 
         {filteredPosts.length === 0 && (
           <div className="text-center py-12">
-            <p className={`text-xl ${subtextColor}`}>No articles found matching your criteria.</p>
+            <p className={`text-xl ${subtextColor}`}>{lang === 'zh' ? '没有符合筛选条件的文章。' : 'No articles found matching your criteria.'}</p>
           </div>
         )}
       </div>

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Loader, Trash } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient, Favorite } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { lang } = useLanguage();
   const [cartItems, setCartItems] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,14 +26,14 @@ const CartPage: React.FC = () => {
         const response = await apiClient.getFavorites({ page: 1, pageSize: 100 });
         setCartItems(response.data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load cart');
+        setError(err instanceof Error ? err.message : (lang === 'zh' ? '加载购物车失败' : 'Failed to load cart'));
       } finally {
         setLoading(false);
       }
     };
 
     loadCart();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, lang]);
 
   const totalPrice = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.item.price || 0), 0),
@@ -43,7 +45,7 @@ const CartPage: React.FC = () => {
       await apiClient.removeFavorite(favoriteId);
       setCartItems((prev) => prev.filter((entry) => entry.id !== favoriteId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove item');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '移除商品失败' : 'Failed to remove item'));
     }
   };
 
@@ -58,7 +60,7 @@ const CartPage: React.FC = () => {
       setCartItems((prev) => prev.filter((entry) => entry.id !== favorite.id));
       navigate('/orders');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create order');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '创建订单失败' : 'Failed to create order'));
     } finally {
       setBuyingId(null);
     }
@@ -67,19 +69,21 @@ const CartPage: React.FC = () => {
   return (
     <div className="min-h-screen py-8" style={{ background: 'linear-gradient(to bottom, #b4edc6, #bfe7e5)' }}>
       <div className="max-w-6xl mx-auto px-6">
-        <button onClick={() => navigate('/')} className="mb-4 px-3 py-1 text-gray-700 hover:text-gray-900">← Back</button>
+        <button onClick={() => navigate('/')} className="mb-4 px-3 py-1 text-gray-700 hover:text-gray-900">← {lang === 'zh' ? '返回' : 'Back'}</button>
 
-        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Shopping cart</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-1">{lang === 'zh' ? '购物车' : 'Shopping cart'}</h2>
         {!isAuthenticated ? (
-          <p className="text-sm text-gray-600 mb-6">Please sign in to view your cart.</p>
+          <p className="text-sm text-gray-600 mb-6">{lang === 'zh' ? '请先登录后查看购物车。' : 'Please sign in to view your cart.'}</p>
         ) : (
           <p className="text-sm text-gray-600 mb-6">
-            You have {cartItems.length} item(s) in your cart • Total ${totalPrice.toFixed(2)}
+            {lang === 'zh'
+              ? `购物车中有 ${cartItems.length} 件商品 • 合计 $${totalPrice.toFixed(2)}`
+              : `You have ${cartItems.length} item(s) in your cart • Total $${totalPrice.toFixed(2)}`}
           </p>
         )}
 
         {loading ? (
-          <div className="text-center py-12 text-gray-700">Loading cart...</div>
+          <div className="text-center py-12 text-gray-700">{lang === 'zh' ? '购物车加载中...' : 'Loading cart...'}</div>
         ) : error ? (
           <div className="text-center py-12 text-red-600">{error}</div>
         ) : (
@@ -115,13 +119,13 @@ const CartPage: React.FC = () => {
                     onClick={() => handleBuy(favorite)}
                     disabled={buyingId === favorite.id}
                   >
-                    {buyingId === favorite.id ? <Loader className="h-4 w-4 animate-spin" /> : 'BUY'}
+                    {buyingId === favorite.id ? <Loader className="h-4 w-4 animate-spin" /> : (lang === 'zh' ? '购买' : 'BUY')}
                   </button>
                 </div>
               </div>
             ))}
             {isAuthenticated && cartItems.length === 0 && (
-              <div className="text-center py-12 text-gray-700">Your cart is empty.</div>
+              <div className="text-center py-12 text-gray-700">{lang === 'zh' ? '你的购物车是空的。' : 'Your cart is empty.'}</div>
             )}
           </div>
         )}

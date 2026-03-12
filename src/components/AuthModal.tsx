@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, MapPin, Phone } from 'lucide-react';
 import { signIn, signUp } from '../lib/backend';
+import { useLanguage } from '../context/LanguageContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChange }) => {
+  const { lang } = useLanguage();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -47,7 +49,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         phone: ''
       });
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Authentication failed');
+      setError(error instanceof Error ? error.message : (lang === 'zh' ? '认证失败' : 'Authentication failed'));
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
       <div className="bg-white rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">
-            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {mode === 'signin' ? (lang === 'zh' ? '登录' : 'Sign In') : (lang === 'zh' ? '创建账号' : 'Create Account')}
           </h2>
           <button
             onClick={onClose}
@@ -88,7 +90,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
+                  {lang === 'zh' ? '姓名' : 'Full Name'}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -98,7 +100,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                     value={formData.full_name}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your full name"
+                    placeholder={lang === 'zh' ? '你的姓名' : 'Your full name'}
                     required
                   />
                 </div>
@@ -106,7 +108,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  University
+                  {lang === 'zh' ? '学校' : 'University'}
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -116,7 +118,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                     value={formData.university}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your university"
+                    placeholder={lang === 'zh' ? '你的学校' : 'Your university'}
                     required
                   />
                 </div>
@@ -124,7 +126,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone (Optional)
+                  {lang === 'zh' ? '手机号（选填）' : 'Phone (Optional)'}
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -134,7 +136,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your phone number"
+                    placeholder={lang === 'zh' ? '你的手机号' : 'Your phone number'}
                   />
                 </div>
               </div>
@@ -143,7 +145,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {lang === 'zh' ? '邮箱' : 'Email'}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -153,7 +155,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="your.email@university.edu"
+                placeholder={lang === 'zh' ? 'your.email@university.edu' : 'your.email@university.edu'}
                 required
               />
             </div>
@@ -161,7 +163,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {lang === 'zh' ? '密码' : 'Password'}
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -171,7 +173,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Your password"
+                placeholder={lang === 'zh' ? '你的密码' : 'Your password'}
                 required
                 minLength={6}
               />
@@ -183,18 +185,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 px-4 rounded-lg transition-colors"
           >
-            {loading ? 'Loading...' : (mode === 'signin' ? 'Sign In' : 'Create Account')}
+            {loading ? (lang === 'zh' ? '处理中...' : 'Loading...') : (mode === 'signin' ? (lang === 'zh' ? '登录' : 'Sign In') : (lang === 'zh' ? '创建账号' : 'Create Account'))}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}
+            {mode === 'signin' ? (lang === 'zh' ? '还没有账号？' : "Don't have an account?") : (lang === 'zh' ? '已有账号？' : 'Already have an account?')}
             <button
               onClick={() => onModeChange(mode === 'signin' ? 'signup' : 'signin')}
               className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
             >
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
+              {mode === 'signin' ? (lang === 'zh' ? '去注册' : 'Sign up') : (lang === 'zh' ? '去登录' : 'Sign in')}
             </button>
           </p>
         </div>

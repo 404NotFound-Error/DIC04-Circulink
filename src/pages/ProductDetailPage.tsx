@@ -3,11 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Loader, AlertCircle, Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { ApiError, apiClient, Item } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { lang } = useLanguage();
 
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,14 +29,14 @@ export default function ProductDetailPage() {
         const response = await apiClient.getItem(id);
         setItem(response.data as Item);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load item");
+        setError(err instanceof Error ? err.message : (lang === 'zh' ? "加载商品失败" : "Failed to load item"));
       } finally {
         setLoading(false);
       }
     };
 
     loadItem();
-  }, [id]);
+  }, [id, lang]);
 
   useEffect(() => {
     if (!id || !isAuthenticated) {
@@ -71,7 +73,7 @@ export default function ProductDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-2 text-red-600">
           <AlertCircle className="w-5 h-5" />
-          <span>{error || "Item not found"}</span>
+          <span>{error || (lang === 'zh' ? "未找到商品" : "Item not found")}</span>
         </div>
       </div>
     );
@@ -126,7 +128,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      setError("Please sign in before placing an order");
+      setError(lang === 'zh' ? "请先登录后再下单" : "Please sign in before placing an order");
       return;
     }
 
@@ -139,7 +141,7 @@ export default function ProductDetailPage() {
       });
       navigate(`/orders/${response.data.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create order");
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? "创建订单失败" : "Failed to create order"));
       console.error("Failed to create order:", err);
     } finally {
       setBuying(false);
@@ -218,18 +220,18 @@ export default function ProductDetailPage() {
 
               {/* Seller Info */}
               <div className="mb-6 bg-white bg-opacity-60 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">Seller</p>
+                <p className="text-sm text-gray-600 mb-2">{lang === 'zh' ? '卖家' : 'Seller'}</p>
                 <div className="flex items-center gap-3">
                   <div>
-                    <p className="font-semibold text-gray-800">{item.seller?.name || "Unknown"}</p>
-                    <p className="text-xs text-gray-600">{item.seller?.email || 'No email'}</p>
+                    <p className="font-semibold text-gray-800">{item.seller?.name || (lang === 'zh' ? "未知用户" : "Unknown")}</p>
+                    <p className="text-xs text-gray-600">{item.seller?.email || (lang === 'zh' ? '无邮箱' : 'No email')}</p>
                   </div>
                 </div>
               </div>
 
               {/* Description */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">{lang === 'zh' ? '描述' : 'Description'}</label>
                 <div className="bg-green-100 bg-opacity-60 rounded-lg p-4 min-h-32 text-gray-700">
                   {item.description}
                 </div>
@@ -238,19 +240,19 @@ export default function ProductDetailPage() {
               {/* Item Details */}
               <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                 <div className="bg-white bg-opacity-60 rounded-lg p-3">
-                  <p className="text-gray-600">Condition</p>
+                  <p className="text-gray-600">{lang === 'zh' ? '成色' : 'Condition'}</p>
                   <p className="font-semibold text-gray-800">{item.condition}</p>
                 </div>
                 <div className="bg-white bg-opacity-60 rounded-lg p-3">
-                  <p className="text-gray-600">Status</p>
+                  <p className="text-gray-600">{lang === 'zh' ? '状态' : 'Status'}</p>
                   <p className="font-semibold text-gray-800">{item.status}</p>
                 </div>
                 <div className="bg-white bg-opacity-60 rounded-lg p-3">
-                  <p className="text-gray-600">Category</p>
-                  <p className="font-semibold text-gray-800">{item.category?.name || "N/A"}</p>
+                  <p className="text-gray-600">{lang === 'zh' ? '分类' : 'Category'}</p>
+                  <p className="font-semibold text-gray-800">{item.category?.name || (lang === 'zh' ? "暂无" : "N/A")}</p>
                 </div>
                 <div className="bg-white bg-opacity-60 rounded-lg p-3">
-                  <p className="text-gray-600">Posted</p>
+                  <p className="text-gray-600">{lang === 'zh' ? '发布时间' : 'Posted'}</p>
                   <p className="font-semibold text-gray-800">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </p>
@@ -270,14 +272,14 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   <Heart className={`w-5 h-5 ${isFavorited ? "fill-current" : ""}`} />
-                  {isFavorited ? "Favorited" : "Favorite"}
+                  {isFavorited ? (lang === 'zh' ? "已收藏" : "Favorited") : (lang === 'zh' ? "收藏" : "Favorite")}
                 </button>
                 <button
                   onClick={handleContact}
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-green-300 hover:bg-green-400 text-gray-800 rounded-full font-semibold transition"
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  Contact
+                  {lang === 'zh' ? '联系卖家' : 'Contact'}
                 </button>
               </div>
               <button
@@ -285,7 +287,7 @@ export default function ProductDetailPage() {
                 disabled={buying}
                 className="w-full py-3 px-4 bg-green-400 hover:bg-green-500 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 rounded-full font-bold text-lg transition"
               >
-                {buying ? "Processing..." : "BUY NOW"}
+                {buying ? (lang === 'zh' ? "处理中..." : "Processing...") : (lang === 'zh' ? "立即购买" : "BUY NOW")}
               </button>
             </div>
           </div>

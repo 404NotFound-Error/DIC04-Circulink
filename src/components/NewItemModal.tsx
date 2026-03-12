@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Loader, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../lib/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NewItemModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface ValidationErrors {
 
 const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -84,38 +86,38 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
     const newErrors: ValidationErrors = {};
 
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = lang === 'zh' ? '标题不能为空' : 'Title is required';
     } else if (title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
+      newErrors.title = lang === 'zh' ? '标题至少 3 个字符' : 'Title must be at least 3 characters';
     } else if (title.length > 100) {
-      newErrors.title = 'Title must be less than 100 characters';
+      newErrors.title = lang === 'zh' ? '标题不能超过 100 个字符' : 'Title must be less than 100 characters';
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = lang === 'zh' ? '描述不能为空' : 'Description is required';
     } else if (description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
+      newErrors.description = lang === 'zh' ? '描述至少 10 个字符' : 'Description must be at least 10 characters';
     } else if (description.length > 1000) {
-      newErrors.description = 'Description must be less than 1000 characters';
+      newErrors.description = lang === 'zh' ? '描述不能超过 1000 个字符' : 'Description must be less than 1000 characters';
     }
 
     const priceNum = parseFloat(price);
     if (!price) {
-      newErrors.price = 'Price is required';
+      newErrors.price = lang === 'zh' ? '价格不能为空' : 'Price is required';
     } else if (isNaN(priceNum)) {
-      newErrors.price = 'Price must be a valid number';
+      newErrors.price = lang === 'zh' ? '价格格式不正确' : 'Price must be a valid number';
     } else if (priceNum < 0) {
-      newErrors.price = 'Price cannot be negative';
+      newErrors.price = lang === 'zh' ? '价格不能为负数' : 'Price cannot be negative';
     } else if (priceNum > 1000000) {
-      newErrors.price = 'Price is too high';
+      newErrors.price = lang === 'zh' ? '价格过高' : 'Price is too high';
     }
 
     if (!categoryId) {
-      newErrors.category = 'Category is required';
+      newErrors.category = lang === 'zh' ? '分类不能为空' : 'Category is required';
     }
 
     if (selectedFiles.length === 0 && uploadedImageUrls.length === 0) {
-      newErrors.images = 'At least one image is required';
+      newErrors.images = lang === 'zh' ? '至少上传一张图片' : 'At least one image is required';
     }
 
     setErrors(newErrors);
@@ -128,18 +130,18 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
     // Validate file types and sizes
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/')) {
-        setError('Only image files are allowed');
+        setError(lang === 'zh' ? '仅支持图片文件' : 'Only image files are allowed');
         return false;
       }
       if (file.size > 10 * 1024 * 1024) { // 10MB
-        setError('Image size must be less than 10MB');
+        setError(lang === 'zh' ? '图片需小于 10MB' : 'Image size must be less than 10MB');
         return false;
       }
       return true;
     });
 
     if (validFiles.length + selectedFiles.length > 5) {
-      setError('Maximum 5 images allowed');
+      setError(lang === 'zh' ? '最多上传 5 张图片' : 'Maximum 5 images allowed');
       return;
     }
 
@@ -171,7 +173,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
         urls.push(data.data.path);
       } catch (err) {
         console.error('Image upload error:', err);
-        throw new Error('Failed to upload image');
+        throw new Error(lang === 'zh' ? '上传图片失败' : 'Failed to upload image');
       }
     }
 
@@ -186,7 +188,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
     }
 
     if (!user) {
-      setError('You must be logged in to create an item');
+      setError(lang === 'zh' ? '请先登录后再发布商品' : 'You must be logged in to create an item');
       return;
     }
 
@@ -220,7 +222,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
       }
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create item');
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? '创建商品失败' : 'Failed to create item'));
     } finally {
       setSubmitting(false);
       setUploading(false);
@@ -233,7 +235,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-gray-900">List New Item</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{lang === 'zh' ? '发布新商品' : 'List New Item'}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -255,7 +257,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Item Title <span className="text-red-500">*</span>
+              {lang === 'zh' ? '商品标题' : 'Item Title'} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -264,7 +266,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                 errors.title ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="e.g., MacBook Pro 13 inch M1"
+              placeholder={lang === 'zh' ? '例如：MacBook Pro 13 M1' : 'e.g., MacBook Pro 13 inch M1'}
               disabled={submitting || uploading}
             />
             {errors.title && (
@@ -275,7 +277,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description <span className="text-red-500">*</span>
+              {lang === 'zh' ? '描述' : 'Description'} <span className="text-red-500">*</span>
             </label>
             <textarea
               value={description}
@@ -284,11 +286,11 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
               className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
                 errors.description ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="Describe your item in detail..."
+              placeholder={lang === 'zh' ? '详细描述你的商品...' : 'Describe your item in detail...'}
               disabled={submitting || uploading}
             />
             <p className="mt-1 text-sm text-gray-500">
-              {description.length}/1000 characters
+              {description.length}/1000 {lang === 'zh' ? '字' : 'characters'}
             </p>
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">{errors.description}</p>
@@ -299,7 +301,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price ($) <span className="text-red-500">*</span>
+                {lang === 'zh' ? '价格($)' : 'Price ($)'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -319,7 +321,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Condition <span className="text-red-500">*</span>
+                {lang === 'zh' ? '成色' : 'Condition'} <span className="text-red-500">*</span>
               </label>
               <select
                 value={condition}
@@ -327,10 +329,10 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 disabled={submitting || uploading}
               >
-                <option value="NEW">New</option>
-                <option value="LIKE_NEW">Like New</option>
-                <option value="GOOD">Good</option>
-                <option value="FAIR">Fair</option>
+                <option value="NEW">{lang === 'zh' ? '全新' : 'New'}</option>
+                <option value="LIKE_NEW">{lang === 'zh' ? '几乎全新' : 'Like New'}</option>
+                <option value="GOOD">{lang === 'zh' ? '良好' : 'Good'}</option>
+                <option value="FAIR">{lang === 'zh' ? '一般' : 'Fair'}</option>
               </select>
             </div>
           </div>
@@ -338,7 +340,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category <span className="text-red-500">*</span>
+              {lang === 'zh' ? '分类' : 'Category'} <span className="text-red-500">*</span>
             </label>
             <select
               value={categoryId}
@@ -348,7 +350,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
               }`}
               disabled={submitting || uploading || categories.length === 0}
             >
-              {categories.length === 0 && <option value="">Loading categories...</option>}
+              {categories.length === 0 && <option value="">{lang === 'zh' ? '分类加载中...' : 'Loading categories...'}</option>}
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
@@ -361,7 +363,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
           {/* Photos */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Photos <span className="text-red-500">*</span>
+              {lang === 'zh' ? '图片' : 'Photos'} <span className="text-red-500">*</span>
             </label>
 
             {/* Image previews */}
@@ -408,9 +410,9 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
             >
               <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">
-                {previewUrls.length === 0 ? 'Click to upload images' : `${previewUrls.length}/5 images selected`}
+                {previewUrls.length === 0 ? (lang === 'zh' ? '点击上传图片' : 'Click to upload images') : (lang === 'zh' ? `已选择 ${previewUrls.length}/5 张` : `${previewUrls.length}/5 images selected`)}
               </p>
-              <p className="text-sm text-gray-500">PNG, JPG up to 10MB • Max 5 images</p>
+              <p className="text-sm text-gray-500">{lang === 'zh' ? 'PNG/JPG，单张不超过10MB，最多5张' : 'PNG, JPG up to 10MB • Max 5 images'}</p>
             </button>
             {errors.images && (
               <p className="mt-1 text-sm text-red-600">{errors.images}</p>
@@ -425,7 +427,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
               className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={submitting || uploading}
             >
-              Cancel
+              {lang === 'zh' ? '取消' : 'Cancel'}
             </button>
             <button
               type="submit"
@@ -434,7 +436,7 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
             >
               {uploading && <Loader className="h-5 w-5 animate-spin" />}
               {submitting && !uploading && <Loader className="h-5 w-5 animate-spin" />}
-              {uploading ? 'Uploading Images...' : submitting ? 'Creating...' : 'List Item'}
+              {uploading ? (lang === 'zh' ? '上传图片中...' : 'Uploading Images...') : submitting ? (lang === 'zh' ? '创建中...' : 'Creating...') : (lang === 'zh' ? '发布商品' : 'List Item')}
             </button>
           </div>
         </form>

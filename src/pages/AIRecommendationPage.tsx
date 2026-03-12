@@ -5,7 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 
 interface RecommendedItem {
   id: string;
-  title: string;
+  titleEn: string;
+  titleZh: string;
   price: string;
   image: string;
   isFavorite?: boolean;
@@ -14,13 +15,14 @@ interface RecommendedItem {
 
 const AIRecommendationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [userQuery, setUserQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([
     {
       id: '1',
-      title: 'Sample Product 1',
+      titleEn: 'Sample Product 1',
+      titleZh: '示例商品 1',
       price: '$25.00',
       image: '/placeholder.jpg',
       isFavorite: false,
@@ -28,7 +30,8 @@ const AIRecommendationPage: React.FC = () => {
     },
     {
       id: '2',
-      title: 'Sample Product 2',
+      titleEn: 'Sample Product 2',
+      titleZh: '示例商品 2',
       price: '$45.00',
       image: '/placeholder.jpg',
       isFavorite: false,
@@ -69,7 +72,7 @@ const AIRecommendationPage: React.FC = () => {
             className="flex items-center gap-2 text-emerald-700 hover:text-emerald-800 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="text-sm font-medium">Back</span>
+            <span className="text-sm font-medium">{lang === 'zh' ? '返回' : 'Back'}</span>
           </button>
         </div>
       </div>
@@ -90,12 +93,12 @@ const AIRecommendationPage: React.FC = () => {
           {/* Left: Query Input */}
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 border-emerald-100">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Ask Circulink anything...
+              {lang === 'zh' ? '告诉 Circulink 你的需求...' : 'Ask Circulink anything...'}
             </label>
             <textarea
               value={userQuery}
               onChange={(e) => setUserQuery(e.target.value)}
-              placeholder="(e.g., I'm a freshman looking for cheap electronics, and the preferred price is from x to y.)"
+              placeholder={lang === 'zh' ? '例如：我是新生，想找便宜电子产品，预算 x 到 y。' : "(e.g., I'm a freshman looking for cheap electronics, and the preferred price is from x to y.)"}
               className="w-full h-40 sm:h-64 p-4 border-2 border-emerald-200 rounded-lg resize-none focus:outline-none focus:border-emerald-500 text-gray-700 placeholder:text-gray-400"
             />
             <div className="mt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
@@ -107,7 +110,7 @@ const AIRecommendationPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                    Processing...
+                    {lang === 'zh' ? '处理中...' : 'Processing...'}
                   </>
                 ) : (
                   <>
@@ -122,7 +125,7 @@ const AIRecommendationPage: React.FC = () => {
           {/* Right: Recommendation Panel */}
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border-2 border-emerald-100">
             <h2 className="text-lg sm:text-xl font-bold text-emerald-900 mb-4 sm:mb-6 text-center">
-              Recommendation Panel
+              {lang === 'zh' ? '推荐面板' : 'Recommendation Panel'}
             </h2>
             
             {/* Recommendation Grid */}
@@ -134,7 +137,7 @@ const AIRecommendationPage: React.FC = () => {
                 >
                   {/* Product Image Placeholder */}
                   <div className="w-full aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                    <div className="text-gray-400 text-xs">Image</div>
+                    <div className="text-gray-400 text-xs">{lang === 'zh' ? '图片' : 'Image'}</div>
                   </div>
 
                   {/* Icons */}
@@ -167,9 +170,9 @@ const AIRecommendationPage: React.FC = () => {
 
                   {/* Product Info */}
                   <div className="space-y-1 mb-3">
-                    <div className="text-sm font-semibold text-gray-600">Title</div>
-                    <div className="text-xs text-gray-500 truncate">{item.title}</div>
-                    <div className="text-sm font-semibold text-gray-600 mt-2">Price</div>
+                    <div className="text-sm font-semibold text-gray-600">{lang === 'zh' ? '标题' : 'Title'}</div>
+                    <div className="text-xs text-gray-500 truncate">{lang === 'zh' ? item.titleZh : item.titleEn}</div>
+                    <div className="text-sm font-semibold text-gray-600 mt-2">{lang === 'zh' ? '价格' : 'Price'}</div>
                     <div className="text-xs text-gray-500">{item.price}</div>
                   </div>
 
@@ -178,7 +181,7 @@ const AIRecommendationPage: React.FC = () => {
                     onClick={() => navigate(`/product/${item.id}`)}
                     className="w-full py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
                   >
-                    View Item
+                    {lang === 'zh' ? '查看商品' : 'View Item'}
                   </button>
                 </div>
               ))}

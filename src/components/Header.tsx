@@ -22,6 +22,28 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const { lang, toggleLang, t } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const text = {
+    all: lang === 'zh' ? '全部' : 'All',
+    aiSearch: lang === 'zh' ? 'AI 搜索' : 'AI Search',
+    assistant: lang === 'zh' ? '助手' : 'Assistant',
+    search: lang === 'zh' ? '搜索' : 'Search',
+    languageChange: lang === 'zh' ? '切换语言' : 'Change Language',
+    english: lang === 'zh' ? '英文-EN' : 'English-EN',
+    chinese: lang === 'zh' ? '中文-CN' : 'Chinese-CN',
+    officeSupplies: lang === 'zh' ? '办公与学习用品' : 'Office & Study Supplies',
+    foodSnacks: lang === 'zh' ? '食品与零食' : 'Food & Snacks',
+    dailyEssentials: lang === 'zh' ? '生活用品' : 'Daily Essentials',
+    artDecor: lang === 'zh' ? '艺术与装饰' : 'Art & Decor',
+    clothing: lang === 'zh' ? '服装' : 'Clothing',
+    furniture: lang === 'zh' ? '家具' : 'Furniture',
+    electronics: lang === 'zh' ? '电子产品' : 'Electronics',
+    orders: lang === 'zh' ? '订单' : 'Orders',
+    startBuying: lang === 'zh' ? '开始购买' : 'Start Buying',
+    sellNow: lang === 'zh' ? '立即出售' : 'Sell Now',
+    donation: lang === 'zh' ? '捐赠' : 'Donation',
+    profile: lang === 'zh' ? '个人资料' : 'Profile',
+    about: lang === 'zh' ? '关于' : 'About'
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +82,9 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
               className="flex items-center gap-2 rounded-lg bg-[#6a8d6d] px-3 py-1.5 text-[#e8f2e4] hover:bg-[#5a7d5d] transition-colors cursor-pointer"
             >
               <Sparkles className="h-4 w-4 text-[#e8f2e4]" fill="currentColor" />
-              <div className="text-[10px] leading-tight">
-                <div className="font-semibold">AI Search</div>
-                <div className="text-[9px] opacity-90">Assistant</div>
+                <div className="text-[10px] leading-tight">
+                <div className="font-semibold">{text.aiSearch}</div>
+                <div className="text-[9px] opacity-90">{text.assistant}</div>
               </div>
             </button>
             <div className="ml-4 flex h-8 flex-1 items-stretch overflow-visible rounded-md border border-[#8db28d] bg-[#e6f0e1] relative">
@@ -72,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                   onClick={() => setAllMenuOpen((prev) => !prev)}
                   className="flex h-full items-center gap-1 border-r border-[#8db28d] bg-[#d9e8d2] px-3 text-xs font-semibold text-[#35513a]"
                 >
-                  All
+                  {text.all}
                   <ChevronDown className="h-3 w-3" fill="currentColor" />
                 </button>
                 {allMenuOpen && (
@@ -86,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        All
+                        {text.all}
                       </button>
                       <button
                         onClick={() => {
@@ -96,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Clothing
+                        {text.clothing}
                       </button>
                       <button
                         onClick={() => {
@@ -106,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Furniture
+                        {text.furniture}
                       </button>
                       <button
                         onClick={() => {
@@ -116,7 +138,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Electronics
+                        {text.electronics}
                       </button>
                       <button
                         onClick={() => {
@@ -126,7 +148,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Office &amp; Study Supplies
+                        {text.officeSupplies}
                       </button>
                       <button
                         onClick={() => {
@@ -136,7 +158,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Food &amp; Snacks
+                        {text.foodSnacks}
                       </button>
                       <button
                         onClick={() => {
@@ -146,7 +168,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Daily Essentials
+                        {text.dailyEssentials}
                       </button>
                       <button
                         onClick={() => {
@@ -156,7 +178,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                         className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
-                        Art &amp; Decor
+                        {text.artDecor}
                       </button>
                     </div>
                   </div>
@@ -166,13 +188,13 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
+                placeholder={text.search}
                 className="h-full w-full bg-transparent px-3 text-xs text-[#35513a] placeholder:text-[#6f8f6f] focus:outline-none"
               />
               <button
                 type="submit"
                 className="flex h-full items-center justify-center border-l border-[#8db28d] bg-[#86b18a] px-3 text-[#2f4b32]"
-                aria-label="Search"
+                aria-label={text.search}
               >
                 <Search className="h-4 w-4" />
               </button>
@@ -189,7 +211,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
               {langMenuOpen && (
                 <div className="absolute right-0 top-8 w-40 rounded-md bg-[#f3faf0] shadow-[0_12px_24px_-12px_rgba(0,0,0,0.45)] border border-[#c8ddc3] text-[#2f4b32] text-[10px]">
                   <div className="px-3 py-2 space-y-2">
-                    <div className="text-[9px] uppercase tracking-wider text-[#4b6b4f]">Change Language</div>
+                    <div className="text-[9px] uppercase tracking-wider text-[#4b6b4f]">{text.languageChange}</div>
                     <button
                       onClick={() => {
                         if (lang !== 'en') toggleLang();
@@ -198,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                       className="flex items-center gap-2 w-full text-left"
                     >
                       <span className="h-2 w-2 rounded-full bg-[#56b06a]" />
-                      English-EN
+                      {text.english}
                     </button>
                     <button
                       onClick={() => {
@@ -208,17 +230,17 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                       className="flex items-center gap-2 w-full text-left"
                     >
                       <span className="h-2 w-2 rounded-full bg-[#c7d8c6]" />
-                      Chinese-CN
+                      {text.chinese}
                     </button>
                   </div>
                 </div>
               )}
             </div>
             <button onClick={() => navigate('/profile')} className="hover:text-white">
-              Profile
+              {text.profile}
             </button>
             <button onClick={() => navigate('/about')} className="hover:text-white">
-              About
+              {text.about}
             </button>
             <button
               onClick={onShowFavorites}
@@ -238,7 +260,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
             <button
               onClick={() => navigate('/orders')}
               className="p-1.5 text-[#e6f1e2] hover:text-white"
-              aria-label="Orders"
+              aria-label={text.orders}
             >
               <Package className="h-4 w-4" />
             </button>
@@ -359,15 +381,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
         <div className="w-full">
           <div className="flex items-stretch">
             <button onClick={() => navigate('/buy')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
-              Start Buying
+              {text.startBuying}
             </button>
             <div className="w-px bg-[#b4d3b1]" />
             <button onClick={() => navigate('/sell')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
-              Sell Now
+              {text.sellNow}
             </button>
             <div className="w-px bg-[#b4d3b1]" />
             <button onClick={() => navigate('/donation')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
-              Donation
+              {text.donation}
             </button>
           </div>
         </div>

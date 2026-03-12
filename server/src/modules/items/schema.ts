@@ -31,7 +31,7 @@ export const createItemSchema = z.object({
   body: z.object({
     title: z.string().min(1),
     description: z.string().min(1),
-    price: z.coerce.number().positive(),
+    price: z.coerce.number().nonnegative(),
     condition: conditionEnum,
     status: statusEnum.default("ACTIVE"),
     categoryId: z.string(),
@@ -45,7 +45,7 @@ export const updateItemSchema = z.object({
   body: z.object({
     title: z.string().min(1).optional(),
     description: z.string().min(1).optional(),
-    price: z.coerce.number().positive().optional(),
+    price: z.coerce.number().nonnegative().optional(),
     condition: conditionEnum.optional(),
     status: statusEnum.optional(),
     categoryId: z.string().optional(),
