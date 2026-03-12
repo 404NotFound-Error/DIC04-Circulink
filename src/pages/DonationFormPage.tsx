@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, AlertCircle, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient } from '../lib/api';
+import { apiClient, Category } from '../lib/api';
 import { useLanguage } from '../context/LanguageContext';
 
 const DonationFormPage: React.FC = () => {
@@ -19,6 +19,7 @@ const DonationFormPage: React.FC = () => {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const [donationCategoryId, setDonationCategoryId] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // UI state
   const [uploading, setUploading] = useState(false);
@@ -30,13 +31,7 @@ const DonationFormPage: React.FC = () => {
     const loadCategories = async () => {
       try {
         const response = await apiClient.getCategories();
-        // Find "Other" or first category for donations
-        const otherCat = response.data?.find(c => c.name.toLowerCase().includes('other'));
-        if (otherCat) {
-          setDonationCategoryId(otherCat.id);
-        } else if (response.data && response.data.length > 0) {
-          setDonationCategoryId(response.data[0].id);
-        }
+        setCategories(response.data || []);
       } catch (err) {
         console.error('Failed to load categories:', err);
       }
@@ -120,7 +115,7 @@ const DonationFormPage: React.FC = () => {
     }
 
     if (!donationCategoryId) {
-      setError(lang === 'zh' ? '分类未加载完成，请稍后重试' : 'Category not loaded, please try again');
+      setError(lang === 'zh' ? '请选择捐赠分类' : 'Please select a donation category');
       return;
     }
 
@@ -261,6 +256,28 @@ const DonationFormPage: React.FC = () => {
             <p className="mt-2 text-sm text-emerald-700 text-right">
               {description.length}/1000 {lang === 'zh' ? '字' : 'characters'}
             </p>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-emerald-800 mb-2">
+                {lang === 'zh' ? '捐赠分类' : 'Donation Category'}
+              </label>
+              <select
+                value={donationCategoryId}
+                onChange={(e) => setDonationCategoryId(e.target.value)}
+                className="w-full rounded-lg border-2 border-emerald-200 bg-white px-4 py-3 text-emerald-900 focus:outline-none focus:border-emerald-400"
+                disabled={submitting || uploading || categories.length === 0}
+              >
+                <option value="">
+                  {categories.length === 0
+                    ? (lang === 'zh' ? '分类加载中...' : 'Loading categories...')
+                    : (lang === 'zh' ? '请选择分类' : 'Select a category')}
+                </option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
