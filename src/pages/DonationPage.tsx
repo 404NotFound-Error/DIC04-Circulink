@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../hooks/useAuth';
 
 const DonationPage: React.FC = () => {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-emerald-100 to-sky-50 py-12">
       <div className="max-w-6xl mx-auto px-6">
@@ -41,6 +43,17 @@ const DonationPage: React.FC = () => {
             {lang === 'zh' ? '开始捐赠 →' : 'Start Donating →'}
           </button>
         </div>
+
+        {user?.role === 'ADMIN' && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => navigate('/admin/donations')}
+              className="border border-emerald-400 text-emerald-800 bg-white/70 hover:bg-white rounded-full px-8 py-3 font-semibold transition-colors"
+            >
+              {lang === 'zh' ? '进入捐赠管理后台' : 'Open Donation Admin'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

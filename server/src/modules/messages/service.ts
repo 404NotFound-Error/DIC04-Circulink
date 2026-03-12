@@ -2,12 +2,18 @@ import { prisma } from "../../lib/prisma.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { withParsedImages } from "../../utils/images.js";
+import { DONATION_DESCRIPTION_PREFIX, isDonationDescription } from "../donations/utils.js";
 
 export const listThreads = async (userId: string, itemId?: string, page?: number, pageSize?: number) => {
   const { skip, take, page: currentPage, pageSize: currentSize } = normalizePagination({ page, pageSize });
   const where = {
     OR: [{ buyerId: userId }, { sellerId: userId }],
-    ...(itemId ? { itemId } : {})
+    ...(itemId ? { itemId } : {}),
+    item: {
+      NOT: {
+        description: { startsWith: DONATION_DESCRIPTION_PREFIX }
+      }
+    }
   };
 
   const threads = await prisma.messageThread.findMany({
@@ -40,8 +46,12 @@ export const listThreads = async (userId: string, itemId?: string, page?: number
 };
 
 export const listMessages = async (userId: string, threadId: string, page?: number, pageSize?: number) => {
-  const thread = await prisma.messageThread.findUnique({ where: { id: threadId } });
+  const thread = await prisma.messageThread.findUnique({
+    where: { id: threadId },
+    include: { item: { select: { description: true } } }
+  });
   if (!thread) throw new NotFoundError("Thread not found");
+  if (isDonationDescription(thread.item.description)) throw new NotFoundError("Thread not found");
   if (thread.buyerId !== userId && thread.sellerId !== userId) throw new ForbiddenError();
 
   const { skip, take, page: currentPage, pageSize: currentSize } = normalizePagination({ page, pageSize });
@@ -69,6 +79,7 @@ export const sendMessage = async (
   if (!payload.itemId) throw new NotFoundError("Item is required for new thread");
   const item = await prisma.item.findUnique({ where: { id: payload.itemId } });
   if (!item) throw new NotFoundError("Item not found");
+  if (isDonationDescription(item.description)) throw new NotFoundError("Item not found");
 
   const sellerId = item.sellerId;
   const buyerId = userId === sellerId ? payload.recipientId : userId;
@@ -86,9 +97,10 @@ export const sendMessage = async (
 export const markMessageRead = async (userId: string, messageId: string) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
-    include: { thread: true }
+    include: { thread: { include: { item: { select: { description: true } } } } }
   });
   if (!message) throw new NotFoundError("Message not found");
+  if (isDonationDescription(message.thread.item.description)) throw new NotFoundError("Message not found");
   if (message.senderId === userId) throw new ForbiddenError("Cannot mark own message as read");
   if (message.thread.buyerId !== userId && message.thread.sellerId !== userId) throw new ForbiddenError();
 

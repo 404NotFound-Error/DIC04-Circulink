@@ -19,7 +19,7 @@ CircuLink 是一个面向校园二手交易与捐赠场景的全栈项目。
 - 消息：会话列表、发送消息、已读
 - 订单：创建订单、状态流转、买卖双方视角
 - 上传：图片上传（文件类型校验、大小校验、静态访问）
-- 捐赠：捐赠入口、表单、感谢页（复用商品创建链路）
+- 捐赠：独立捐赠提交流程；普通用户不可在 sell/items 中看到捐赠物品；管理员可在独立 Donation Admin 页面查看全部捐赠
 - 国际化：中英切换已覆盖主流程页面文案
 - 质量保障：`lint`、`build`、API smoke test、GitHub Actions CI（lint + build）
 
@@ -115,12 +115,18 @@ JWT_REFRESH_SECRET=your-refresh-secret-change-in-production
 PORT=4000
 CORS_ORIGIN=http://localhost:5173
 UPLOAD_DIR=uploads
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4.1-mini
 ```
 
 可选后端变量（有默认值）：
 - `JWT_ACCESS_TTL`（默认 `15m`）
 - `JWT_REFRESH_TTL`（默认 `7d`）
 - `BCRYPT_ROUNDS`（默认 `10`）
+- `OPENAI_API_KEY`（配置后启用 LLM 图片识别；未配置时使用本地启发式兜底）
+- `OPENAI_BASE_URL`（默认 `https://api.openai.com/v1`，可替换为硅基流动等 OpenAI 兼容网关）
+- `OPENAI_MODEL`（默认 `gpt-4.1-mini`）
 
 ### 5.3 初始化数据库
 
@@ -189,7 +195,46 @@ npm run prisma:studio
 npm run prisma:seed
 ```
 
-## 7. API 概览
+## 7. 管理员账号设置（Donation Admin）
+
+`/admin/donations` 仅允许 `User.role = 'ADMIN'` 的账号访问。
+
+### 7.1 SQL 方式（推荐）
+
+在项目根目录终端执行（先读取 `.env` 里的 `DATABASE_URL`）：
+
+```bash
+set -a
+source .env
+set +a
+psql "$DATABASE_URL"
+```
+
+进入 `psql` 后执行：
+
+```sql
+-- 先全部设为普通用户
+UPDATE "User" SET "role" = 'USER';
+
+-- 指定唯一管理员（把邮箱替换成你的管理员账号）
+UPDATE "User" SET "role" = 'ADMIN' WHERE "email" = 'your-admin@email.com';
+```
+
+### 7.2 Prisma Studio 方式
+
+在项目根目录终端执行：
+
+```bash
+npm run prisma:studio
+```
+
+打开 `User` 表，手动把目标账号的 `role` 改为 `ADMIN`，其余保持 `USER`。
+
+注意：
+- 修改 role 后请重新登录该账号（JWT 中包含角色信息）。
+- 若之后重新执行 `npm run prisma:seed`，可能把测试账号角色重置为 `USER`（以 seed 内容为准）。
+
+## 8. API 概览
 
 Base URL（本地）：
 
@@ -203,6 +248,9 @@ http://localhost:4000/api
 - `POST /auth/*` / `GET /auth/me`
 - `GET /categories`
 - `GET/POST/PATCH/DELETE /items`
+- `POST /donations`（登录用户提交捐赠）
+- `GET /donations`（仅 ADMIN 可查看捐赠列表）
+- `GET /donations/:id`（仅 ADMIN 可查看捐赠详情）
 - `GET/POST/DELETE /favorites`
 - `GET/POST/PATCH /messages`
 - `GET/POST/PATCH /orders`
@@ -212,7 +260,7 @@ http://localhost:4000/api
 - `docs/api.md`
 - `docs/foundation.md`
 
-## 8. 上传与图片说明
+## 9. 上传与图片说明
 
 - 上传接口：`POST /api/uploads`
 - 认证：需要登录（Bearer Token）
@@ -230,16 +278,16 @@ http://localhost:4000/api
 
 前端发布/捐赠流程会先上传图片，再提交商品数据。
 
-## 9. 测试与联调
+## 10. 测试与联调
 
-### 9.1 本地最小回归
+### 10.1 本地最小回归
 
 ```bash
 npm run lint
 npm run build
 ```
 
-### 9.2 API 冒烟测试
+### 10.2 API 冒烟测试
 
 后端运行时执行：
 
@@ -255,7 +303,7 @@ bash scripts/api-smoke-test.sh
 
 若数据库里没有分类，脚本会自动创建 smoke test 分类再继续。
 
-### 9.3 CI
+### 10.3 CI
 
 仓库已配置 GitHub Actions：
 - 文件：`.github/workflows/ci.yml`

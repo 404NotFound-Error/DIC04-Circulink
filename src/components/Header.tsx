@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const { lang, toggleLang, t } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const text = {
     all: lang === 'zh' ? '全部' : 'All',
     aiSearch: lang === 'zh' ? 'AI 搜索' : 'AI Search',
@@ -41,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
     startBuying: lang === 'zh' ? '开始购买' : 'Start Buying',
     sellNow: lang === 'zh' ? '立即出售' : 'Sell Now',
     donation: lang === 'zh' ? '捐赠' : 'Donation',
+    donationAdmin: lang === 'zh' ? '捐赠管理' : 'Donation Admin',
     profile: lang === 'zh' ? '个人资料' : 'Profile',
     about: lang === 'zh' ? '关于' : 'About'
   };
@@ -388,8 +389,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
               {text.sellNow}
             </button>
             <div className="w-px bg-[#b4d3b1]" />
-            <button onClick={() => navigate('/donation')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
-              {text.donation}
+            <button onClick={() => navigate(user?.role === 'ADMIN' ? '/admin/donations' : '/donation')} className="flex-1 text-center py-3 text-[#2f4b32] hover:bg-[#c6e1c1] transition-colors font-medium text-sm sm:text-base shadow-inner">
+              {user?.role === 'ADMIN' ? text.donationAdmin : text.donation}
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { serializeImages, withParsedImages } from "../../utils/images.js";
+import { DONATION_DESCRIPTION_PREFIX, isDonationDescription } from "../donations/utils.js";
 
 // Define types as string constants since SQLite doesn't support enums
 type Condition = "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
@@ -20,11 +21,14 @@ export type ListItemsInput = {
   order?: "asc" | "desc";
   page?: number;
   pageSize?: number;
+  includeDonations?: boolean;
 };
 
 export const listItems = async (filters: ListItemsInput) => {
   const { page, pageSize, skip, take } = normalizePagination(filters);
-  const where: Prisma.ItemWhereInput = {};
+  const where: Prisma.ItemWhereInput = {
+    ...(filters.includeDonations ? {} : { NOT: { description: { startsWith: DONATION_DESCRIPTION_PREFIX } } })
+  };
 
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.sellerId) where.sellerId = filters.sellerId;
@@ -75,6 +79,7 @@ export const getItemById = async (id: string) => {
     }
   });
   if (!item) throw new NotFoundError("Item not found");
+  if (isDonationDescription(item.description)) throw new NotFoundError("Item not found");
   return withParsedImages(item);
 };
 

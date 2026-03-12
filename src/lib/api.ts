@@ -295,6 +295,38 @@ class ApiClient {
     });
   }
 
+  // Donations
+  async createDonation(data: CreateDonationInput) {
+    return this.request<{ data: Item }>("/donations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getDonations(params?: {
+    q?: string;
+    categoryId?: string;
+    sellerId?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) query.append(key, String(value));
+      });
+    }
+    return this.request<{ data: Item[]; meta: PaginationMeta }>(`/donations?${query}`);
+  }
+
+  // AI
+  async suggestItemFromImages(data: AiItemSuggestInput) {
+    return this.request<{ data: AiItemSuggestResult }>("/ai/item-suggest", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Uploads
   async uploadFile(file: File) {
     const formData = new FormData();
@@ -370,6 +402,12 @@ export interface CreateItemInput {
   images: string[];
 }
 
+export interface CreateDonationInput {
+  description: string;
+  categoryId: string;
+  images: string[];
+}
+
 export interface Favorite {
   id: string;
   userId: string;
@@ -416,6 +454,27 @@ export interface PaginationMeta {
   page: number;
   pageSize: number;
   total: number;
+}
+
+export interface AiItemSuggestInput {
+  imagePaths: string[];
+  userHint?: string;
+  locale?: "zh" | "en";
+}
+
+export interface AiItemSuggestResult {
+  title: string;
+  description: string;
+  condition: "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
+  suggestedPrice: number;
+  minimumAcceptablePrice: number;
+  categoryId: string;
+  categorySlug: string;
+  categoryName: string;
+  confidence: number;
+  warnings: string[];
+  source: "llm" | "heuristic";
+  model?: string;
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

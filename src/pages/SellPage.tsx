@@ -41,7 +41,9 @@ const SellPage: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [aiWarnings, setAiWarnings] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [aiRecognizing, setAiRecognizing] = useState(false);
   const [loadingItem, setLoadingItem] = useState(false);
   const [autoPriceReduce, setAutoPriceReduce] = useState(false);
   const [autoDonation, setAutoDonation] = useState(false);
@@ -119,6 +121,58 @@ const SellPage: React.FC = () => {
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleAiRecognition = async () => {
+    if (existingImagePaths.length + selectedFiles.length === 0) {
+      // Match previous UX: if no image is selected, clicking AI action opens the picker first.
+      openFileDialog();
+      setError(lang === 'zh' ? '请先选择图片，再进行 AI 识别' : 'Please choose images first, then run AI recognition');
+      return;
+    }
+    if (!isAuthenticated) {
+      setError(lang === 'zh' ? '请先登录后再使用 AI 识别' : 'Please sign in before using AI recognition');
+      return;
+    }
+
+    try {
+      setAiRecognizing(true);
+      setError(null);
+      setAiWarnings([]);
+
+      const uploadedPaths: string[] = [];
+      for (const file of selectedFiles) {
+        const response = await apiClient.uploadFile(file);
+        uploadedPaths.push(response.data.path);
+      }
+
+      const finalImagePaths = [...existingImagePaths, ...uploadedPaths];
+      if (uploadedPaths.length > 0) {
+        setExistingImagePaths(finalImagePaths);
+        setSelectedFiles([]);
+        setPreviewUrls([]);
+      }
+
+      const response = await apiClient.suggestItemFromImages({
+        imagePaths: finalImagePaths,
+        userHint: description.trim() || undefined,
+        locale: lang
+      });
+      const suggestion = response.data;
+
+      setTitle(suggestion.title);
+      setDescription(suggestion.description);
+      setCondition(suggestion.condition);
+      setCurrentPrice(String(suggestion.suggestedPrice));
+      setMinimumAcceptablePrice(String(suggestion.minimumAcceptablePrice));
+      setCategoryId(suggestion.categoryId);
+      setAiWarnings(suggestion.warnings ?? []);
+    } catch (err) {
+      setAiWarnings([]);
+      setError(err instanceof Error ? err.message : (lang === 'zh' ? 'AI 识别失败，请稍后重试' : 'AI recognition failed, please try again'));
+    } finally {
+      setAiRecognizing(false);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,12 +345,12 @@ const SellPage: React.FC = () => {
               </button>
 
               <button
-                onClick={openFileDialog}
-                disabled={uploading}
+                onClick={handleAiRecognition}
+                disabled={uploading || aiRecognizing}
                 className="mt-6 bg-emerald-200/80 hover:bg-emerald-200 rounded-md px-4 py-2 text-xs md:text-sm flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <span className="text-lg">⭐</span>
-                <span>{lang === 'zh' ? 'AI 识别' : 'AI Recognition'}</span>
+                <span>{aiRecognizing ? (lang === 'zh' ? 'AI 识别中...' : 'Analyzing...') : (lang === 'zh' ? 'AI 识别' : 'AI Recognition')}</span>
               </button>
               {(existingImagePaths.length > 0 || previewUrls.length > 0) && (
                 <p className="mt-3 text-xs text-emerald-800">
@@ -466,16 +520,27 @@ const SellPage: React.FC = () => {
         {error && (
           <div className="mb-4 text-center text-sm text-red-600">{error}</div>
         )}
+        {aiWarnings.length > 0 && (
+          <div className="mb-4 p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+            {aiWarnings.join(' / ')}
+          </div>
+        )}
         <div className="flex justify-center mb-6">
           <button
             onClick={handleNext}
-            disabled={uploading || loadingItem}
+            disabled={uploading || loadingItem || aiRecognizing}
             className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors shadow-lg text-sm md:text-base"
           >
-            {uploading || loadingItem ? (
+            {uploading || loadingItem || aiRecognizing ? (
               <span className="inline-flex items-center gap-2">
                 <Loader className="h-4 w-4 animate-spin" />
-                {loadingItem ? (lang === 'zh' ? '加载中...' : 'Loading...') : isEditMode ? (lang === 'zh' ? '保存中...' : 'Saving...') : (lang === 'zh' ? '上传中...' : 'Uploading...')}
+                {loadingItem
+                  ? (lang === 'zh' ? '加载中...' : 'Loading...')
+                  : aiRecognizing
+                    ? (lang === 'zh' ? 'AI 识别中...' : 'Analyzing...')
+                    : isEditMode
+                      ? (lang === 'zh' ? '保存中...' : 'Saving...')
+                      : (lang === 'zh' ? '上传中...' : 'Uploading...')}
               </span>
             ) : (
               isEditMode ? (lang === 'zh' ? '保存修改' : 'Save Changes') : (lang === 'zh' ? '下一步：预览商品' : 'Next: Review Your Item')

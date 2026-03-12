@@ -128,13 +128,8 @@ const DonationFormPage: React.FC = () => {
       const imageUrls = await uploadImages();
       setUploading(false);
 
-      // Create donation as a special item with price 0
-      await apiClient.createItem({
-        title: `Donation: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`,
-        description: `[DONATION] ${description}\n\nDonation Agreement:\n- Will bring to campus collection area\n- Item is clean and usable`,
-        price: 0,
-        condition: 'GOOD',
-        status: 'ACTIVE',
+      await apiClient.createDonation({
+        description,
         categoryId: donationCategoryId,
         images: imageUrls
       });

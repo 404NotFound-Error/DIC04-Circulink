@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { ForbiddenError, NotFoundError } from "../../utils/errors.js";
 import { normalizePagination } from "../../utils/pagination.js";
 import { withParsedImages } from "../../utils/images.js";
+import { isDonationDescription } from "../donations/utils.js";
 
 // Define OrderStatus as string constants since SQLite doesn't support enums
 type OrderStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "PAID" | "SHIPPED" | "COMPLETED" | "CANCELLED";
@@ -26,6 +27,7 @@ const getRole = (order: { buyerId: string; sellerId: string }, userId: string) =
 export const createOrder = async (buyerId: string, data: { itemId: string; total?: number }) => {
   const item = await prisma.item.findUnique({ where: { id: data.itemId } });
   if (!item) throw new NotFoundError("Item not found");
+  if (isDonationDescription(item.description)) throw new ForbiddenError("Donation item is not for sale");
   if (item.sellerId === buyerId) throw new ForbiddenError("Cannot order own item");
   if (item.status !== "ACTIVE") throw new ForbiddenError("Item not available");
 

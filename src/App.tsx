@@ -15,6 +15,7 @@ import BuyPage from './pages/BuyPage';
 import DonationPage from './pages/DonationPage';
 import DonationFormPage from './pages/DonationFormPage';
 import DonationThanksPage from './pages/DonationThanksPage';
+import AdminDonationsPage from './pages/AdminDonationsPage';
 import MessagesPage from './pages/MessagesPage';
 import AIRecommendationPage from './pages/AIRecommendationPage';
 import OrdersPage from './pages/OrdersPage';
@@ -62,6 +63,7 @@ function App() {
           <Route path="/donation" element={<DonationPage />} />
           <Route path="/donation/form" element={<DonationFormPage />} />
           <Route path="/donation/thanks" element={<DonationThanksPage />} />
+          <Route path="/admin/donations" element={<AdminDonationsPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/ai-recommendation" element={<AIRecommendationPage />} />
           <Route path="/orders" element={<OrdersPage />} />

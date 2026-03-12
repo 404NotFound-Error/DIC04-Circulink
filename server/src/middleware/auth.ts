@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { RequestHandler } from "express";
-import { AuthError } from "../utils/errors.js";
+import { AuthError, ForbiddenError } from "../utils/errors.js";
 import { env } from "../config/env.js";
 
 export type AuthUser = {
@@ -38,5 +38,11 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
     }
   }
   if (!req.user) return next(new AuthError());
+  return next();
+};
+
+export const requireAdmin: RequestHandler = (req, _res, next) => {
+  if (!req.user) return next(new AuthError());
+  if (req.user.role !== "ADMIN") return next(new ForbiddenError("Admin access required"));
   return next();
 };

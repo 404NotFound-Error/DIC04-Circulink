@@ -13,7 +13,10 @@ const envSchema = z.object({
   JWT_REFRESH_TTL: z.string().default("7d"),
   BCRYPT_ROUNDS: z.string().default("10"),
   CORS_ORIGIN: z.string().optional(),
-  UPLOAD_DIR: z.string().default("uploads")
+  UPLOAD_DIR: z.string().default("uploads"),
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_BASE_URL: z.string().default("https://api.openai.com/v1"),
+  OPENAI_MODEL: z.string().default("gpt-4.1-mini")
 });
 
 export const env = envSchema.parse(process.env);
