@@ -8,7 +8,7 @@ interface ItemData {
   title: string;
   description: string;
   currentPrice: number;
-  originalPrice?: number;
+  minimumAcceptablePrice?: number;
   images: string[];
   condition: string;
   categoryId: string;
@@ -26,6 +26,12 @@ const SellReviewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
   const resolveImageUrl = (url: string) => (url.startsWith('/uploads/') ? `${apiOrigin}${url}` : url);
+  const reducedPriceAfter7Days = itemData.autoPriceReduce
+    ? Math.max(
+      itemData.currentPrice * 0.9,
+      itemData.minimumAcceptablePrice ?? 0
+    )
+    : null;
 
   if (!itemData) {
     return (
@@ -156,8 +162,11 @@ const SellReviewPage: React.FC = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-1 mb-6 text-sm text-emerald-800">
-                {itemData.originalPrice !== undefined && <p>{lang === 'zh' ? `原价：$${itemData.originalPrice.toFixed(2)}` : `Original price: $${itemData.originalPrice.toFixed(2)}`}</p>}
+                {itemData.minimumAcceptablePrice !== undefined && <p>{lang === 'zh' ? `最低可接受价格：$${itemData.minimumAcceptablePrice.toFixed(2)}` : `Minimum acceptable price: $${itemData.minimumAcceptablePrice.toFixed(2)}`}</p>}
                 <p>{lang === 'zh' ? '7天后自动降价：' : 'Auto reduce after 7 days: '}{itemData.autoPriceReduce ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
+                {reducedPriceAfter7Days !== null && (
+                  <p>{lang === 'zh' ? `7天后价格（含最低价保护）：$${reducedPriceAfter7Days.toFixed(2)}` : `Price after 7 days (with floor): $${reducedPriceAfter7Days.toFixed(2)}`}</p>
+                )}
                 <p>{lang === 'zh' ? '30天后自动捐赠：' : 'Auto donation after 30 days: '}{itemData.autoDonation ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
               </div>
               {error && (

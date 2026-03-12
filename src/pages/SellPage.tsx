@@ -9,7 +9,7 @@ interface SellDraftState {
   title: string;
   description: string;
   currentPrice: number;
-  originalPrice?: number;
+  minimumAcceptablePrice?: number;
   condition: string;
   categoryId: string;
   categoryName?: string;
@@ -34,7 +34,7 @@ const SellPage: React.FC = () => {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [currentPrice, setCurrentPrice] = useState<string>('');
-  const [originalPrice, setOriginalPrice] = useState<string>('');
+  const [minimumAcceptablePrice, setMinimumAcceptablePrice] = useState<string>('');
   const [condition, setCondition] = useState<string>('GOOD');
   const [categoryId, setCategoryId] = useState<string>('');
   const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
@@ -79,7 +79,7 @@ const SellPage: React.FC = () => {
     setTitle(draft.title || '');
     setDescription(draft.description || '');
     setCurrentPrice(draft.currentPrice ? String(draft.currentPrice) : '');
-    setOriginalPrice(draft.originalPrice ? String(draft.originalPrice) : '');
+    setMinimumAcceptablePrice(draft.minimumAcceptablePrice ? String(draft.minimumAcceptablePrice) : '');
     setCondition(draft.condition || 'GOOD');
     setCategoryId(draft.categoryId || '');
     setExistingImagePaths(draft.images || []);
@@ -99,8 +99,7 @@ const SellPage: React.FC = () => {
         setTitle(item.title || '');
         setDescription(item.description || '');
         setCurrentPrice(String(item.price ?? ''));
-        // Pre-fill original price with current saved price when legacy value is unavailable.
-        setOriginalPrice(String(item.price ?? ''));
+        setMinimumAcceptablePrice('');
         setCondition(item.condition || 'GOOD');
         setCategoryId(item.categoryId || '');
         setExistingImagePaths(normalizeImages(item.images));
@@ -181,6 +180,18 @@ const SellPage: React.FC = () => {
       setError(lang === 'zh' ? '请输入有效价格' : 'Please enter a valid current price');
       return;
     }
+    if (minimumAcceptablePrice) {
+      const minimumPrice = Number(minimumAcceptablePrice);
+      const current = Number(currentPrice);
+      if (Number.isNaN(minimumPrice) || minimumPrice <= 0) {
+        setError(lang === 'zh' ? '请输入有效的最低可接受价格' : 'Please enter a valid minimum acceptable price');
+        return;
+      }
+      if (minimumPrice > current) {
+        setError(lang === 'zh' ? '最低可接受价格不能高于当前价格' : 'Minimum acceptable price cannot exceed current price');
+        return;
+      }
+    }
     if (!categoryId) {
       setError(lang === 'zh' ? '请选择分类' : 'Please select a category');
       return;
@@ -218,7 +229,7 @@ const SellPage: React.FC = () => {
         title: title.trim(),
         description: description.trim(),
         currentPrice: Number(currentPrice),
-        originalPrice: originalPrice ? Number(originalPrice) : undefined,
+        minimumAcceptablePrice: minimumAcceptablePrice ? Number(minimumAcceptablePrice) : undefined,
         condition,
         categoryId,
         categoryName: categories.find((category) => category.id === categoryId)?.name,
@@ -366,13 +377,13 @@ const SellPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
-                {lang === 'zh' ? '¥ 原价' : '¥ Original Price'}
+                {lang === 'zh' ? '¥ 最低可接受价格' : '¥ Minimum Acceptable Price'}
               </label>
               <input
                 type="number"
-                value={originalPrice}
-                onChange={(e) => setOriginalPrice(e.target.value)}
-                placeholder={lang === 'zh' ? '输入原价' : 'Enter original price'}
+                value={minimumAcceptablePrice}
+                onChange={(e) => setMinimumAcceptablePrice(e.target.value)}
+                placeholder={lang === 'zh' ? '输入最低可接受价格' : 'Enter minimum acceptable price'}
                 className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
               />
             </div>
@@ -419,7 +430,7 @@ const SellPage: React.FC = () => {
               className="mt-1 w-4 h-4 cursor-pointer"
             />
             <label htmlFor="autoPriceReduce" className="text-sm md:text-base text-gray-700 cursor-pointer flex-1">
-              {lang === 'zh' ? '若 7 天内未售出，自动降价 10%。' : 'If unsold after 7 days, automatically reduce price by 10%.'}
+              {lang === 'zh' ? '若 7 天内未售出，自动降价 10%，且不会低于最低可接受价格。' : 'If unsold after 7 days, automatically reduce price by 10%, without dropping below your minimum acceptable price.'}
             </label>
           </div>
         </div>
