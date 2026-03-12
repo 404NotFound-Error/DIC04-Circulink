@@ -19,6 +19,10 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const enableDevAutoLogin =
+      import.meta.env.DEV &&
+      String(import.meta.env.VITE_ENABLE_DEV_AUTO_LOGIN || '').toLowerCase() === 'true';
+
     // Get initial session
     const getInitialSession = async () => {
       const { user: currentUser } = await getCurrentUser();
@@ -29,8 +33,8 @@ export const useAuth = () => {
         setProfile(profileData);
       }
       
-      // If no user and in dev, try auto-login with test credentials
-      if (!currentUser && import.meta.env.DEV) {
+      // Optional dev helper: auto-login test account only when explicitly enabled.
+      if (!currentUser && enableDevAutoLogin) {
         try {
           const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
           const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
@@ -43,25 +47,7 @@ export const useAuth = () => {
             setProfile(profileData);
           }
         } catch {
-          // Try register then login
-          try {
-            await apiClient.register({
-              email: (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
-              password: (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123',
-              name: 'Test User'
-            });
-            const loginResult = await apiClient.login(
-              (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com',
-              (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123'
-            );
-            if (loginResult.user) {
-              setUser(loginResult.user);
-              const { data: profileData } = await getProfile(loginResult.user.id);
-              setProfile(profileData);
-            }
-          } catch {
-            // ignore errors in dev
-          }
+          // ignore errors when auto-login is enabled
         }
       }
 

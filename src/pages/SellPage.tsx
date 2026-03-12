@@ -1,18 +1,122 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader } from 'lucide-react';
+import { apiClient } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
+
+interface SellDraftState {
+  title: string;
+  description: string;
+  currentPrice: number;
+  originalPrice?: number;
+  condition: string;
+  images: string[];
+  autoPriceReduce: boolean;
+  autoDonation: boolean;
+}
 
 const SellPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form state
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [currentPrice, setCurrentPrice] = useState<string>('');
   const [originalPrice, setOriginalPrice] = useState<string>('');
+  const [condition, setCondition] = useState<string>('GOOD');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [autoPriceReduce, setAutoPriceReduce] = useState(false);
   const [autoDonation, setAutoDonation] = useState(false);
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      setError('Please select image files');
+      return;
+    }
+    if (imageFiles.some((file) => file.size > 10 * 1024 * 1024)) {
+      setError('Each image must be under 10MB');
+      return;
+    }
+    if (selectedFiles.length + imageFiles.length > 5) {
+      setError('You can upload at most 5 images');
+      return;
+    }
+
+    setSelectedFiles((prev) => [...prev, ...imageFiles]);
+
+    const readers = imageFiles.map(
+      (file) =>
+        new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        })
+    );
+    Promise.all(readers).then((urls) => {
+      setPreviewUrls((prev) => [...prev, ...urls]);
+      setError(null);
+    });
+  };
+
+  const handleNext = async () => {
+    if (!isAuthenticated) {
+      setError('Please sign in before listing an item');
+      return;
+    }
+    if (!title.trim()) {
+      setError('Please enter a title');
+      return;
+    }
+    if (!description.trim()) {
+      setError('Please enter a description');
+      return;
+    }
+    if (!currentPrice || Number(currentPrice) <= 0) {
+      setError('Please enter a valid current price');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      setError('Please upload at least one image');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+      const uploadedPaths: string[] = [];
+      for (const file of selectedFiles) {
+        const response = await apiClient.uploadFile(file);
+        uploadedPaths.push(response.data.path);
+      }
+
+      const draft: SellDraftState = {
+        title: title.trim(),
+        description: description.trim(),
+        currentPrice: Number(currentPrice),
+        originalPrice: originalPrice ? Number(originalPrice) : undefined,
+        condition,
+        images: uploadedPaths,
+        autoPriceReduce,
+        autoDonation
+      };
+      navigate('/sell/review', { state: { draft } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload images');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -45,14 +149,15 @@ const SellPage: React.FC = () => {
             <div className="bg-emerald-100/60 rounded-2xl p-6 md:p-8 h-64 md:h-72 flex flex-col items-center justify-center shadow-lg border border-emerald-200">
               <input
                 ref={fileInputRef}
-                onChange={() => {}}
+                onChange={handleFileSelect}
                 type="file"
                 accept="image/*"
                 multiple
                 className="hidden"
+                disabled={uploading}
               />
 
-              <button onClick={openFileDialog} className="flex items-center gap-2 text-emerald-900 text-base md:text-lg hover:opacity-80 transition-opacity">
+              <button onClick={openFileDialog} className="flex items-center gap-2 text-emerald-900 text-base md:text-lg hover:opacity-80 transition-opacity" disabled={uploading}>
                 <span className="text-lg md:text-xl">📷</span>
                 <span>Add your images</span>
               </button>
@@ -61,11 +166,23 @@ const SellPage: React.FC = () => {
                 <span className="text-lg">⭐</span>
                 <span>AI Recognition</span>
               </button>
+              {previewUrls.length > 0 && (
+                <p className="mt-3 text-xs text-emerald-800">{previewUrls.length} image(s) selected</p>
+              )}
             </div>
           </div>
 
           <div className="md:col-span-2">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Item title..."
+              className="w-full mb-4 bg-emerald-50 rounded-xl p-4 border-2 border-emerald-200 text-emerald-800 focus:outline-none focus:border-emerald-400"
+            />
             <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your goods..."
               className="w-full h-64 md:h-72 bg-emerald-50 rounded-2xl p-6 md:p-10 border-2 border-emerald-200 shadow-[8px_8px_0_rgba(16,185,129,0.06)] text-emerald-800 focus:outline-none focus:border-emerald-400 resize-none text-sm md:text-base"
             />
@@ -104,6 +221,21 @@ const SellPage: React.FC = () => {
                 placeholder="Enter original price"
                 className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
               />
+            </div>
+            <div>
+              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+                Condition
+              </label>
+              <select
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+              >
+                <option value="NEW">NEW</option>
+                <option value="LIKE_NEW">LIKE_NEW</option>
+                <option value="GOOD">GOOD</option>
+                <option value="FAIR">FAIR</option>
+              </select>
             </div>
           </div>
 
@@ -147,12 +279,23 @@ const SellPage: React.FC = () => {
         </div>
 
         {/* Submit Button */}
+        {error && (
+          <div className="mb-4 text-center text-sm text-red-600">{error}</div>
+        )}
         <div className="flex justify-center mb-6">
           <button
-            onClick={() => navigate('/sell/review')}
+            onClick={handleNext}
+            disabled={uploading}
             className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors shadow-lg text-sm md:text-base"
           >
-            Next: Review Your Item
+            {uploading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader className="h-4 w-4 animate-spin" />
+                Uploading...
+              </span>
+            ) : (
+              'Next: Review Your Item'
+            )}
           </button>
         </div>
       </div>

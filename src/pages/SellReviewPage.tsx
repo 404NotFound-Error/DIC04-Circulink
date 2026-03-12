@@ -1,34 +1,89 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AlertCircle, Loader } from 'lucide-react';
+import { apiClient, Category } from '../lib/api';
 
 interface ItemData {
   title: string;
   description: string;
-  price: number;
+  currentPrice: number;
+  originalPrice?: number;
   images: string[];
   condition: string;
-  category: string;
+  autoPriceReduce?: boolean;
+  autoDonation?: boolean;
 }
 
 const SellReviewPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const itemData = (location.state as { draft?: ItemData } | null)?.draft;
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<string>('');
+  const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
+  const resolveImageUrl = (url: string) => (url.startsWith('/uploads/') ? `${apiOrigin}${url}` : url);
 
-  // Mock item data from form (in real app, this would come from state/props)
-  const itemData: ItemData = {
-    title: 'An ergonomic laptop stand suitable for student study spaces',
-    description: 'helping improve posture and desk organization.',
-    price: 99.99,
-    images: [
-      'https://via.placeholder.com/400x400?text=Laptop+Stand',
-    ],
-    condition: 'EXCELLENT',
-    category: 'Electronics',
-  };
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        const response = await apiClient.getCategories();
+        const categories = response.data || [];
+        const defaultCategory = categories.find((category: Category) => category.slug === 'components') || categories[0];
+        if (defaultCategory) setCategoryId(defaultCategory.id);
+      } catch {
+        setCategoryId('');
+      }
+    };
+    loadCategory();
+  }, []);
 
-  const handleAccept = () => {
-    // In real app, submit the item to API
-    console.log('Item accepted:', itemData);
-    navigate('/sell/success', { state: { item: itemData } });
+  if (!itemData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 py-12">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <p className="text-lg text-emerald-900 mb-4">No draft data found. Please fill the sell form first.</p>
+          <button
+            onClick={() => navigate('/sell')}
+            className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Back to Sell Form
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAccept = async () => {
+    if (!itemData) return;
+    if (!categoryId) {
+      setError('Category not ready yet, please retry in a moment.');
+      return;
+    }
+    const hasBase64Image = itemData.images.some((image) => image.startsWith('data:image/'));
+    if (hasBase64Image) {
+      setError('Detected local preview images. Please go back to Sell page and re-upload images before publishing.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      const response = await apiClient.createItem({
+        title: itemData.title,
+        description: itemData.description,
+        price: itemData.currentPrice,
+        condition: itemData.condition,
+        status: 'ACTIVE',
+        categoryId,
+        images: itemData.images
+      });
+      navigate(`/product/${response.data.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to publish item');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleRevise = () => {
@@ -60,7 +115,7 @@ const SellReviewPage: React.FC = () => {
             <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg overflow-hidden">
               {itemData.images[0] && (
                 <img
-                  src={itemData.images[0]}
+                  src={resolveImageUrl(itemData.images[0])}
                   alt={itemData.title}
                   className="w-full h-64 md:h-72 object-cover rounded-xl"
                 />
@@ -94,7 +149,7 @@ const SellReviewPage: React.FC = () => {
                 <div>
                   <p className="text-xs md:text-sm text-gray-600">Price</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
-                    ${itemData.price.toFixed(2)}
+                    ${itemData.currentPrice.toFixed(2)}
                   </p>
                 </div>
                 <div>
@@ -104,14 +159,26 @@ const SellReviewPage: React.FC = () => {
                   </p>
                 </div>
               </div>
+              <div className="grid grid-cols-1 gap-1 mb-6 text-sm text-emerald-800">
+                {itemData.originalPrice !== undefined && <p>Original price: ${itemData.originalPrice.toFixed(2)}</p>}
+                <p>Auto reduce after 7 days: {itemData.autoPriceReduce ? 'Yes' : 'No'}</p>
+                <p>Auto donation after 30 days: {itemData.autoDonation ? 'Yes' : 'No'}</p>
+              </div>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
                   onClick={handleAccept}
+                  disabled={submitting}
                   className="flex-1 px-6 py-2 md:py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-full transition-colors shadow-md text-sm md:text-base"
                 >
-                  Accept
+                  {submitting ? <span className="inline-flex items-center gap-2"><Loader className="h-4 w-4 animate-spin" />Publishing...</span> : 'Accept'}
                 </button>
                 <button
                   onClick={handleRevise}

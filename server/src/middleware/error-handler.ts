@@ -5,6 +5,20 @@ import { logger } from "../lib/logger.js";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "type" in err &&
+    (err as { type?: string }).type === "entity.too.large"
+  ) {
+    return res.status(413).json({
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Image payload too large. Please upload files first (do not send base64 in JSON).",
+        requestId: _req.requestId
+      }
+    });
+  }
   if (err instanceof ZodError) {
     return res
       .status(400)

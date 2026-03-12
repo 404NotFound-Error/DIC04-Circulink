@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
-import { apiClient, Item } from '../lib/api';
+import { apiClient, Category, Item } from '../lib/api';
 
 interface ListItemsParams {
   categoryId?: string;
@@ -17,6 +17,7 @@ const CategoryPage: React.FC = () => {
 
   // State
   const [products, setProducts] = useState<Item[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -24,6 +25,28 @@ const CategoryPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const pageSize = 12;
+  const normalizedCategoryName = (categoryName || '').toLowerCase();
+  const matchedCategory = useMemo(
+    () =>
+      categories.find(
+        (category) =>
+          category.slug.toLowerCase() === normalizedCategoryName ||
+          category.name.toLowerCase().replace(/\s+/g, '-') === normalizedCategoryName
+      ),
+    [categories, normalizedCategoryName]
+  );
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await apiClient.getCategories();
+        setCategories(response.data || []);
+      } catch {
+        setCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
 
   // Fetch items for this category
   useEffect(() => {
@@ -31,9 +54,8 @@ const CategoryPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // In a real scenario, we'd get the categoryId from a category list
-        // For now, use the category name as a rough identifier
         const params: ListItemsParams = {
+          ...(matchedCategory?.id ? { categoryId: matchedCategory.id } : {}),
           page,
           pageSize,
           sort: sortBy,
@@ -54,7 +76,7 @@ const CategoryPage: React.FC = () => {
     if (categoryName) {
       fetchCategoryItems();
     }
-  }, [categoryName, page, sortBy, sortOrder]);
+  }, [categoryName, matchedCategory?.id, page, sortBy, sortOrder]);
 
   const handleNavigateBack = () => {
     navigate('/');
@@ -77,7 +99,7 @@ const CategoryPage: React.FC = () => {
         <div className="bg-white rounded-3xl p-8 mb-8 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl md:text-5xl font-bold text-green-800">
-              {(categoryName || '').toUpperCase()}
+              {(matchedCategory?.name || categoryName || '').toUpperCase()}
             </h1>
             <div className="flex gap-4">
               <div className="relative">
