@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader } from 'lucide-react';
-import { apiClient, Category } from '../lib/api';
+import { apiClient } from '../lib/api';
 
 interface ItemData {
   title: string;
@@ -10,6 +10,8 @@ interface ItemData {
   originalPrice?: number;
   images: string[];
   condition: string;
+  categoryId: string;
+  categoryName?: string;
   autoPriceReduce?: boolean;
   autoDonation?: boolean;
 }
@@ -20,23 +22,8 @@ const SellReviewPage: React.FC = () => {
   const itemData = (location.state as { draft?: ItemData } | null)?.draft;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [categoryId, setCategoryId] = useState<string>('');
   const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
   const resolveImageUrl = (url: string) => (url.startsWith('/uploads/') ? `${apiOrigin}${url}` : url);
-
-  useEffect(() => {
-    const loadCategory = async () => {
-      try {
-        const response = await apiClient.getCategories();
-        const categories = response.data || [];
-        const defaultCategory = categories.find((category: Category) => category.slug === 'components') || categories[0];
-        if (defaultCategory) setCategoryId(defaultCategory.id);
-      } catch {
-        setCategoryId('');
-      }
-    };
-    loadCategory();
-  }, []);
 
   if (!itemData) {
     return (
@@ -56,8 +43,8 @@ const SellReviewPage: React.FC = () => {
 
   const handleAccept = async () => {
     if (!itemData) return;
-    if (!categoryId) {
-      setError('Category not ready yet, please retry in a moment.');
+    if (!itemData.categoryId) {
+      setError('Category is required. Please go back and choose a category.');
       return;
     }
     const hasBase64Image = itemData.images.some((image) => image.startsWith('data:image/'));
@@ -75,7 +62,7 @@ const SellReviewPage: React.FC = () => {
         price: itemData.currentPrice,
         condition: itemData.condition,
         status: 'ACTIVE',
-        categoryId,
+        categoryId: itemData.categoryId,
         images: itemData.images
       });
       navigate(`/product/${response.data.id}`);
@@ -87,8 +74,7 @@ const SellReviewPage: React.FC = () => {
   };
 
   const handleRevise = () => {
-    // Navigate back to sell form to edit
-    navigate('/sell');
+    navigate('/sell', { state: { draft: itemData } });
   };
 
   return (
@@ -145,7 +131,7 @@ const SellReviewPage: React.FC = () => {
               </div>
 
               {/* Info */}
-              <div className="grid grid-cols-2 gap-4 mb-8 bg-white rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-white rounded-lg p-4">
                 <div>
                   <p className="text-xs md:text-sm text-gray-600">Price</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
@@ -156,6 +142,12 @@ const SellReviewPage: React.FC = () => {
                   <p className="text-xs md:text-sm text-gray-600">Condition</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
                     {itemData.condition}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs md:text-sm text-gray-600">Category</p>
+                  <p className="text-lg md:text-xl font-bold text-emerald-700">
+                    {itemData.categoryName || itemData.categoryId}
                   </p>
                 </div>
               </div>

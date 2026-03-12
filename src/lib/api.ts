@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+export const AUTH_TOKEN_CHANGED_EVENT = "circulink:auth-token-changed";
 
 class ApiError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -24,6 +25,7 @@ class ApiClient {
     } else {
       localStorage.removeItem("access_token");
     }
+    window.dispatchEvent(new CustomEvent(AUTH_TOKEN_CHANGED_EVENT, { detail: { token } }));
   }
 
   getToken(): string | null {

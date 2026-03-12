@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, ChevronDown, ShoppingCart, Package } from 'lucide-react';
+import { Search, Plus, MessageCircle, Menu, X, LogOut, Sparkles, Star, ChevronDown, ShoppingCart, Package, Heart } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { signOut } from '../lib/backend';
@@ -78,6 +78,16 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                 {allMenuOpen && (
                   <div className="absolute left-0 top-10 w-48 rounded-md bg-[#f3faf0] shadow-[0_12px_24px_-12px_rgba(0,0,0,0.45)] border border-[#c8ddc3] text-[#2f4b32] text-[10px]">
                     <div className="px-3 py-2 space-y-1">
+                      <button
+                        onClick={() => {
+                          navigate('/category/all');
+                          setAllMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-[#e8f4e5] p-1.5 rounded transition-colors"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#73b07b]" />
+                        All
+                      </button>
                       <button
                         onClick={() => {
                           navigate('/category/clothing');
@@ -303,7 +313,13 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewItem, onShowFavorites })
                     <Heart className="h-5 w-5" />
                     <span>{t('favorites')}</span>
                   </button>
-                  <button className="flex items-center justify-center space-x-2 text-[#e6f1e2]">
+                  <button
+                    onClick={() => {
+                      navigate('/messages');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center justify-center space-x-2 text-[#e6f1e2]"
+                  >
                     <MessageCircle className="h-5 w-5" />
                     <span>{t('messages')}</span>
                     <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">3</span>

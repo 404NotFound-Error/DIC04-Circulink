@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Loader, AlertCircle, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient, Message as ApiMessage, MessageThread } from '../lib/api';
 
@@ -7,6 +8,9 @@ type Message = ApiMessage & { isUser?: boolean };
 
 interface ThreadDisplay {
   id: string;
+  itemId: string;
+  buyerId: string;
+  sellerId: string;
   participantName: string;
   lastMessage: string;
   unreadCount: number;
@@ -15,6 +19,7 @@ interface ThreadDisplay {
 
 const MessagesPage: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [threads, setThreads] = useState<ThreadDisplay[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,6 +29,9 @@ const MessagesPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryItemId = searchParams.get('itemId');
+  const querySellerId = searchParams.get('sellerId');
+  const canStartNewThread = Boolean(queryItemId && querySellerId && user && querySellerId !== user.id);
 
   // Load messages for selected thread
   const loadMessages = useCallback(async (threadId: string) => {
@@ -58,6 +66,15 @@ const MessagesPage: React.FC = () => {
   }, [messages]);
 
   const loadThreads = useCallback(async () => {
+    if (!user) {
+      setThreads([]);
+      setSelectedThreadId(null);
+      setMessages([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -67,6 +84,9 @@ const MessagesPage: React.FC = () => {
       // Transform threads to include participant names
       const transformedThreads: ThreadDisplay[] = threadList.map((thread: MessageThread) => ({
         id: thread.id,
+        itemId: thread.itemId,
+        buyerId: thread.buyerId,
+        sellerId: thread.sellerId,
         participantName: thread.item?.title || `Thread ${thread.id.slice(0, 8)}`,
         lastMessage: thread.lastMessage?.body || 'No messages yet',
         unreadCount: thread.unreadCount || 0,
@@ -74,10 +94,16 @@ const MessagesPage: React.FC = () => {
       }));
       
       setThreads(transformedThreads);
-      
-      if (transformedThreads.length > 0) {
-        setSelectedThreadId(transformedThreads[0].id);
+      if (queryItemId && querySellerId) {
+        const matchedThread = transformedThreads.find(
+          (thread) => thread.itemId === queryItemId && thread.sellerId === querySellerId
+        );
+        if (matchedThread) {
+          setSelectedThreadId(matchedThread.id);
+          return;
+        }
       }
+      if (transformedThreads.length > 0) setSelectedThreadId(transformedThreads[0].id);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load conversations';
       setError(errorMsg);
@@ -85,22 +111,50 @@ const MessagesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryItemId, querySellerId, user]);
 
   // Load all message threads on mount
   useEffect(() => {
     loadThreads();
-  }, [loadThreads]);
+  }, [loadThreads, user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const timer = window.setInterval(() => {
+      loadThreads();
+      if (selectedThreadId) {
+        loadMessages(selectedThreadId);
+      }
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [user, selectedThreadId, loadThreads, loadMessages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedThreadId) return;
+    if (!newMessage.trim()) return;
 
     try {
       setSending(true);
-      await apiClient.sendMessage(selectedThreadId, newMessage);
+      if (selectedThreadId) {
+        await apiClient.sendMessage(selectedThreadId, newMessage);
+      } else if (canStartNewThread && queryItemId && querySellerId) {
+        await apiClient.sendMessage({
+          itemId: queryItemId,
+          recipientId: querySellerId,
+          body: newMessage
+        });
+      } else {
+        setError('Please select a conversation first');
+        return;
+      }
       setNewMessage('');
-      await loadMessages(selectedThreadId);
       await loadThreads();
+      if (selectedThreadId) {
+        await loadMessages(selectedThreadId);
+      } else {
+        await loadThreads();
+      }
     } catch (err) {
       console.error('Send message error:', err);
       setError('Failed to send message');
@@ -114,6 +168,7 @@ const MessagesPage: React.FC = () => {
   );
 
   const selectedThread = threads.find(t => t.id === selectedThreadId);
+  const showComposer = Boolean(selectedThread || canStartNewThread);
 
   return (
     <div className="flex h-[calc(100vh-48px)] bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50">
@@ -196,17 +251,17 @@ const MessagesPage: React.FC = () => {
 
       {/* Chat Area */}
       <div className="hidden md:flex flex-1 flex-col bg-gradient-to-b from-cyan-50 to-emerald-50">
-        {selectedThread ? (
+        {showComposer ? (
           <>
             {/* Chat Header */}
             <div className="p-6 border-b border-emerald-200 bg-white shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center text-white font-semibold">
-                  {(selectedThread.participantName || 'U').charAt(0).toUpperCase()}
+                  {(selectedThread?.participantName || 'New Chat').charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h3 className="font-semibold text-emerald-900">
-                    {selectedThread.participantName || 'Unknown User'}
+                    {selectedThread?.participantName || 'New Conversation'}
                   </h3>
                   <p className="text-sm text-gray-500">Online</p>
                 </div>
@@ -276,13 +331,13 @@ const MessagesPage: React.FC = () => {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Type your message..."
+                  placeholder={selectedThread ? 'Type your message...' : 'Send first message to start this conversation...'}
                   disabled={sending}
                   className="flex-1 px-4 py-2 rounded-lg border border-emerald-200 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={sending || !newMessage.trim()}
+                  disabled={sending || !newMessage.trim() || (!selectedThread && !canStartNewThread)}
                   className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                 >
                   {sending ? (

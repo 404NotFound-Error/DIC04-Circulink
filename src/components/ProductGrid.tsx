@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient, Favorite, Item } from '../lib/api';
+import { ApiError, apiClient, Favorite, Item } from '../lib/api';
 
 interface ProductGridProps {
   products: Item[];
@@ -48,6 +48,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
         setFavoritesSet((s) => ({ ...s, [productId]: true }));
       }
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setFavoritesSet((s) => ({ ...s, [productId]: true }));
+        return;
+      }
       console.error('Favorite toggle error', err);
     }
   };

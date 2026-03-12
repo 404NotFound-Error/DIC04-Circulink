@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { apiClient, User } from '../lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { apiClient, AUTH_TOKEN_CHANGED_EVENT, User } from '../lib/api';
 import { getCurrentUser, getProfile } from '../lib/backend';
 
 interface Profile {
@@ -17,54 +17,72 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const enableDevAutoLogin =
+    import.meta.env.DEV &&
+    String(import.meta.env.VITE_ENABLE_DEV_AUTO_LOGIN || '').toLowerCase() === 'true';
+
+  const loadSession = useCallback(async (allowDevAutoLogin = false) => {
+    const { user: currentUser } = await getCurrentUser();
+    setUser(currentUser);
+
+    if (currentUser) {
+      const { data: profileData } = await getProfile(currentUser.id);
+      setProfile(profileData);
+      return;
+    }
+
+    setProfile(null);
+
+    // Optional dev helper: auto-login test account only when explicitly enabled.
+    if (allowDevAutoLogin && enableDevAutoLogin) {
+      try {
+        const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
+        const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
+        const loginResult = await apiClient.login(email, password);
+        if (loginResult.user) {
+          setUser(loginResult.user);
+          const { data: profileData } = await getProfile(loginResult.user.id);
+          setProfile(profileData);
+        }
+      } catch {
+        // ignore errors when auto-login is enabled
+      }
+    }
+  }, [enableDevAutoLogin]);
 
   useEffect(() => {
-    const enableDevAutoLogin =
-      import.meta.env.DEV &&
-      String(import.meta.env.VITE_ENABLE_DEV_AUTO_LOGIN || '').toLowerCase() === 'true';
+    let mounted = true;
 
-    // Get initial session
-    const getInitialSession = async () => {
-      const { user: currentUser } = await getCurrentUser();
-      setUser(currentUser);
-      
-      if (currentUser) {
-        const { data: profileData } = await getProfile(currentUser.id);
-        setProfile(profileData);
+    const bootstrap = async () => {
+      await loadSession(true);
+      if (mounted) {
+        setLoading(false);
       }
-      
-      // Optional dev helper: auto-login test account only when explicitly enabled.
-      if (!currentUser && enableDevAutoLogin) {
-        try {
-          const email = (import.meta.env.VITE_TEST_EMAIL as string | undefined) ?? 'test@example.com';
-          const password = (import.meta.env.VITE_TEST_PASSWORD as string | undefined) ?? 'password123';
-
-          // Try login
-          const loginResult = await apiClient.login(email, password);
-          if (loginResult.user) {
-            setUser(loginResult.user);
-            const { data: profileData } = await getProfile(loginResult.user.id);
-            setProfile(profileData);
-          }
-        } catch {
-          // ignore errors when auto-login is enabled
-        }
-      }
-
-      setLoading(false);
     };
 
-    getInitialSession();
+    const onAuthChanged = async () => {
+      await loadSession(false);
+    };
 
-    // Note: current backend auth flow doesn't provide real-time auth state events
-    // For now, we rely on initial load and explicit login/logout calls
-  }, []);
+    const onStorage = async (event: StorageEvent) => {
+      if (event.key === 'access_token') {
+        await loadSession(false);
+      }
+    };
+
+    bootstrap();
+    window.addEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthChanged);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthChanged);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [loadSession]);
 
   const refreshProfile = async () => {
-    if (user) {
-      const { data: profileData } = await getProfile(user.id);
-      setProfile(profileData);
-    }
+    await loadSession(false);
   };
 
   return {

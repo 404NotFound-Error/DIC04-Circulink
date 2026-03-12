@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader, AlertCircle, Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiClient, Item } from "../lib/api";
+import { ApiError, apiClient, Item } from "../lib/api";
+import { useAuth } from "../hooks/useAuth";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +35,28 @@ export default function ProductDetailPage() {
 
     loadItem();
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !isAuthenticated) {
+      setIsFavorited(false);
+      setFavoriteId(null);
+      return;
+    }
+
+    const loadFavoriteStatus = async () => {
+      try {
+        const response = await apiClient.getFavorites({ page: 1, pageSize: 200 });
+        const existing = (response.data || []).find((favorite) => favorite.itemId === id);
+        setIsFavorited(Boolean(existing));
+        setFavoriteId(existing?.id ?? null);
+      } catch {
+        setIsFavorited(false);
+        setFavoriteId(null);
+      }
+    };
+
+    loadFavoriteStatus();
+  }, [id, isAuthenticated]);
 
   if (loading) {
     return (
@@ -70,20 +96,54 @@ export default function ProductDetailPage() {
   };
 
   const handleToggleFavorite = async () => {
+    if (!isAuthenticated) return;
+
     try {
-      if (isFavorited) {
-        await apiClient.removeFavoriteByItemId(item.id);
+      if (favoriteId) {
+        await apiClient.removeFavorite(favoriteId);
+        setIsFavorited(false);
+        setFavoriteId(null);
       } else {
-        await apiClient.addFavorite(item.id);
+        const response = await apiClient.addFavorite(item.id);
+        setIsFavorited(true);
+        setFavoriteId(response.data.id);
       }
-      setIsFavorited(!isFavorited);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setIsFavorited(true);
+        const response = await apiClient.getFavorites({ page: 1, pageSize: 200 });
+        const existing = (response.data || []).find((favorite) => favorite.itemId === item.id);
+        setFavoriteId(existing?.id ?? null);
+        return;
+      }
       console.error("Failed to toggle favorite:", err);
     }
   };
 
   const handleContact = () => {
     navigate(`/messages?sellerId=${item.seller.id}&itemId=${item.id}`);
+  };
+
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      setError("Please sign in before placing an order");
+      return;
+    }
+
+    try {
+      setBuying(true);
+      setError(null);
+      const response = await apiClient.createOrder({
+        itemId: item.id,
+        total: Number(item.price)
+      });
+      navigate(`/orders/${response.data.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create order");
+      console.error("Failed to create order:", err);
+    } finally {
+      setBuying(false);
+    }
   };
 
   return (
@@ -220,8 +280,12 @@ export default function ProductDetailPage() {
                   Contact
                 </button>
               </div>
-              <button className="w-full py-3 px-4 bg-green-400 hover:bg-green-500 text-gray-800 rounded-full font-bold text-lg transition">
-                BUY NOW
+              <button
+                onClick={handleBuyNow}
+                disabled={buying}
+                className="w-full py-3 px-4 bg-green-400 hover:bg-green-500 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 rounded-full font-bold text-lg transition"
+              >
+                {buying ? "Processing..." : "BUY NOW"}
               </button>
             </div>
           </div>

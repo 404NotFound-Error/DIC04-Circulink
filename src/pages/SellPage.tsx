@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
-import { apiClient } from '../lib/api';
+import { apiClient, Category } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface SellDraftState {
@@ -10,6 +10,8 @@ interface SellDraftState {
   currentPrice: number;
   originalPrice?: number;
   condition: string;
+  categoryId: string;
+  categoryName?: string;
   images: string[];
   autoPriceReduce: boolean;
   autoDonation: boolean;
@@ -17,8 +19,10 @@ interface SellDraftState {
 
 const SellPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const draft = (location.state as { draft?: SellDraftState } | null)?.draft;
 
   // Form state
   const [title, setTitle] = useState<string>('');
@@ -26,12 +30,38 @@ const SellPage: React.FC = () => {
   const [currentPrice, setCurrentPrice] = useState<string>('');
   const [originalPrice, setOriginalPrice] = useState<string>('');
   const [condition, setCondition] = useState<string>('GOOD');
+  const [categoryId, setCategoryId] = useState<string>('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [autoPriceReduce, setAutoPriceReduce] = useState(false);
   const [autoDonation, setAutoDonation] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await apiClient.getCategories();
+        setCategories(response.data || []);
+      } catch {
+        setCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (!draft) return;
+    setTitle(draft.title || '');
+    setDescription(draft.description || '');
+    setCurrentPrice(draft.currentPrice ? String(draft.currentPrice) : '');
+    setOriginalPrice(draft.originalPrice ? String(draft.originalPrice) : '');
+    setCondition(draft.condition || 'GOOD');
+    setCategoryId(draft.categoryId || '');
+    setAutoPriceReduce(Boolean(draft.autoPriceReduce));
+    setAutoDonation(Boolean(draft.autoDonation));
+  }, [draft]);
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
@@ -87,6 +117,10 @@ const SellPage: React.FC = () => {
       setError('Please enter a valid current price');
       return;
     }
+    if (!categoryId) {
+      setError('Please select a category');
+      return;
+    }
     if (selectedFiles.length === 0) {
       setError('Please upload at least one image');
       return;
@@ -107,6 +141,8 @@ const SellPage: React.FC = () => {
         currentPrice: Number(currentPrice),
         originalPrice: originalPrice ? Number(originalPrice) : undefined,
         condition,
+        categoryId,
+        categoryName: categories.find((category) => category.id === categoryId)?.name,
         images: uploadedPaths,
         autoPriceReduce,
         autoDonation
@@ -162,7 +198,11 @@ const SellPage: React.FC = () => {
                 <span>Add your images</span>
               </button>
 
-              <button className="mt-6 bg-emerald-200/80 hover:bg-emerald-200 rounded-md px-4 py-2 text-xs md:text-sm flex items-center gap-2 transition-colors">
+              <button
+                onClick={openFileDialog}
+                disabled={uploading}
+                className="mt-6 bg-emerald-200/80 hover:bg-emerald-200 rounded-md px-4 py-2 text-xs md:text-sm flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 <span className="text-lg">⭐</span>
                 <span>AI Recognition</span>
               </button>
@@ -235,6 +275,23 @@ const SellPage: React.FC = () => {
                 <option value="LIKE_NEW">LIKE_NEW</option>
                 <option value="GOOD">GOOD</option>
                 <option value="FAIR">FAIR</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+                Category
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

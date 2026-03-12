@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader, AlertCircle, ShoppingBag } from 'lucide-react';
-import { apiClient, Category, Item } from '../lib/api';
+import { ApiError, apiClient, Category, Favorite, Item } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 
 interface ListItemsParams {
   categoryId?: string;
@@ -14,6 +15,7 @@ interface ListItemsParams {
 const CategoryPage: React.FC = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   // State
   const [products, setProducts] = useState<Item[]>([]);
@@ -24,8 +26,10 @@ const CategoryPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
+  const [favoritesSet, setFavoritesSet] = useState<Record<string, boolean>>({});
   const pageSize = 12;
   const normalizedCategoryName = (categoryName || '').toLowerCase();
+  const isAllCategory = normalizedCategoryName === 'all';
   const matchedCategory = useMemo(
     () =>
       categories.find(
@@ -48,6 +52,26 @@ const CategoryPage: React.FC = () => {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!user) {
+        setFavoritesSet({});
+        return;
+      }
+      try {
+        const response = await apiClient.getFavorites();
+        const map: Record<string, boolean> = {};
+        (response.data || []).forEach((fav: Favorite) => {
+          if (fav.itemId) map[fav.itemId] = true;
+        });
+        setFavoritesSet(map);
+      } catch {
+        setFavoritesSet({});
+      }
+    };
+    loadFavorites();
+  }, [user]);
+
   // Fetch items for this category
   useEffect(() => {
     const fetchCategoryItems = async () => {
@@ -55,7 +79,7 @@ const CategoryPage: React.FC = () => {
       setError(null);
       try {
         const params: ListItemsParams = {
-          ...(matchedCategory?.id ? { categoryId: matchedCategory.id } : {}),
+          ...(!isAllCategory && matchedCategory?.id ? { categoryId: matchedCategory.id } : {}),
           page,
           pageSize,
           sort: sortBy,
@@ -76,10 +100,32 @@ const CategoryPage: React.FC = () => {
     if (categoryName) {
       fetchCategoryItems();
     }
-  }, [categoryName, matchedCategory?.id, page, sortBy, sortOrder]);
+  }, [categoryName, matchedCategory?.id, isAllCategory, page, sortBy, sortOrder]);
 
   const handleNavigateBack = () => {
     navigate('/');
+  };
+
+  const handleToggleFavorite = async (event: React.MouseEvent, productId: string) => {
+    event.stopPropagation();
+    if (!isAuthenticated || !user) return;
+
+    try {
+      const isFav = Boolean(favoritesSet[productId]);
+      if (isFav) {
+        await apiClient.removeFavoriteByItemId(productId);
+        setFavoritesSet((prev) => ({ ...prev, [productId]: false }));
+      } else {
+        await apiClient.addFavorite(productId);
+        setFavoritesSet((prev) => ({ ...prev, [productId]: true }));
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setFavoritesSet((prev) => ({ ...prev, [productId]: true }));
+        return;
+      }
+      console.error('Failed to toggle favorite:', err);
+    }
   };
 
   return (
@@ -99,7 +145,7 @@ const CategoryPage: React.FC = () => {
         <div className="bg-white rounded-3xl p-8 mb-8 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-4xl md:text-5xl font-bold text-green-800">
-              {(matchedCategory?.name || categoryName || '').toUpperCase()}
+              {(isAllCategory ? 'All Products' : (matchedCategory?.name || categoryName || '')).toUpperCase()}
             </h1>
             <div className="flex gap-4">
               <div className="relative">
@@ -185,12 +231,20 @@ const CategoryPage: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {/* Favorite Star */}
-                    <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow">
+                    <button
+                      onClick={(event) => handleToggleFavorite(event, product.id)}
+                      disabled={!isAuthenticated}
+                      className={`absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow ${
+                        !isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
                       <svg
-                        className="w-6 h-6 text-gray-400"
+                        className={`w-6 h-6 ${
+                          favoritesSet[product.id] ? 'text-yellow-400 fill-current' : 'text-gray-400'
+                        }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        fill="none"
+                        fill={favoritesSet[product.id] ? 'currentColor' : 'none'}
                       >
                         <path
                           strokeLinecap="round"
