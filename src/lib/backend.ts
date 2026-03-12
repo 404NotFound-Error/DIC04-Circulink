@@ -1,5 +1,31 @@
 import { apiClient, ApiError, CreateItemInput } from './api';
 
+const PROFILE_CACHE_KEY = 'profile_cache_v1';
+
+type CachedProfile = {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+  university: string;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+const readProfileCache = (): Record<string, CachedProfile> => {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, CachedProfile>) : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeProfileCache = (cache: Record<string, CachedProfile>) => {
+  localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cache));
+};
+
 // Auth helpers for Express API
 export const signUp = async (email: string, password: string, userData: {
   full_name: string;
@@ -88,20 +114,20 @@ export const getCurrentUser = async () => {
 
 // Profile helpers (simplified - backend doesn't have separate profiles table yet)
 export const getProfile = async (userId: string) => {
-  // For now, just return user data as profile
   try {
     const { user } = await getCurrentUser();
     if (user && user.id === userId) {
+      const cached = readProfileCache()[userId];
       return { 
         data: {
           id: user.id,
           email: user.email,
-          full_name: user.name || '',
-          avatar_url: null,
-          university: '',
-          phone: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          full_name: user.name || cached?.full_name || '',
+          avatar_url: cached?.avatar_url || null,
+          university: cached?.university || '',
+          phone: cached?.phone || null,
+          created_at: cached?.created_at || new Date().toISOString(),
+          updated_at: cached?.updated_at || new Date().toISOString()
         }, 
         error: null 
       };
@@ -113,8 +139,33 @@ export const getProfile = async (userId: string) => {
 };
 
 export const updateProfile = async (userId: string, updates: Record<string, unknown>) => {
-  // Backend doesn't support profile updates yet - return success for now
-  return { data: { id: userId, ...updates }, error: null };
+  try {
+    const response = await apiClient.updateProfile({
+      name: updates.full_name as string | undefined,
+      phone: updates.phone as string | undefined,
+      university: updates.university as string | undefined,
+      avatarUrl: updates.avatar_url as string | undefined
+    });
+
+    const profile = response.data?.profile;
+    const cached: CachedProfile = {
+      id: response.data.id,
+      email: response.data.email,
+      full_name: response.data.name || '',
+      avatar_url: profile?.avatarUrl || null,
+      university: profile?.university || '',
+      phone: profile?.phone || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const cache = readProfileCache();
+    cache[userId] = cached;
+    writeProfileCache(cache);
+    return { data: cached, error: null };
+  } catch (error) {
+    return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
+  }
 };
 
 // Items helpers (migrated to Express API)

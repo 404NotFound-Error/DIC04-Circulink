@@ -123,6 +123,7 @@ class ApiClient {
   // Items
   async getItems(params?: {
     categoryId?: string;
+    sellerId?: string;
     q?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -327,6 +328,11 @@ export interface User {
   email: string;
   name: string | null;
   role: string;
+  profile?: {
+    phone?: string | null;
+    university?: string | null;
+    avatarUrl?: string | null;
+  };
 }
 
 export interface Category {
@@ -375,7 +381,7 @@ export interface MessageThread {
   itemId: string;
   buyerId: string;
   sellerId: string;
-  item: { id: string; title: string; price: string; images: string[] };
+  item: { id: string; title: string; price: number; images: string[] };
   unreadCount: number;
   lastMessage: Message | null;
   createdAt: string;
@@ -396,8 +402,8 @@ export interface Order {
   buyerId: string;
   sellerId: string;
   status: string;
-  total: string;
-  item: { id: string; title: string; price: string; images: string[] };
+  total: number;
+  item: { id: string; title: string; price: number; images: string[] };
   buyer: { id: string; email: string; name: string | null };
   seller: { id: string; email: string; name: string | null };
   createdAt: string;

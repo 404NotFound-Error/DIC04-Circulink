@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, Edit2, Save, X, Package, Heart, ShoppingBag } from 'lucide-react';
-import { signOut } from '../lib/backend';
+import { signOut, updateProfile as updateBackendProfile } from '../lib/backend';
 import { apiClient } from '../lib/api';
 import type { Item } from '../lib/api';
 interface Favorite {
@@ -56,8 +56,12 @@ const ProfilePage: React.FC = () => {
     if (!profile) return;
     setItemsLoading(true);
     try {
-      // 注意：API 没有 sellerId 参数，这里我们暂时使用空数组
-      setMyItems([]);
+      const response = await apiClient.getItems({
+        sellerId: profile.id,
+        page: 1,
+        pageSize: 100
+      });
+      setMyItems(response.data || []);
     } catch (err) {
       console.error('Failed to load items:', err);
     } finally {
@@ -104,10 +108,10 @@ const ProfilePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      await apiClient.updateProfile({
-        name: editForm.name,
+      await updateBackendProfile(profile!.id, {
+        full_name: editForm.name,
         phone: editForm.phone,
-        university: editForm.university,
+        university: editForm.university
       });
       await refreshProfile();
       setIsEditing(false);
@@ -361,8 +365,8 @@ const ProfilePage: React.FC = () => {
                           <p className="text-orange-600 font-bold text-lg">${item.price}</p>
                           <div className="mt-2">
                             <span className={`inline-block px-2 py-1 text-xs rounded ${
-                              item.status === 'available' ? 'bg-green-100 text-green-800' :
-                              item.status === 'sold' ? 'bg-gray-100 text-gray-800' :
+                              item.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                              item.status === 'SOLD' ? 'bg-gray-100 text-gray-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
                               {item.status}

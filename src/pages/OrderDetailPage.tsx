@@ -27,12 +27,6 @@ const OrderDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadOrderDetail();
-    }
-  }, [id, loadOrderDetail]);
-
   const loadOrderDetail = useCallback(async () => {
     if (!id) return;
     try {
@@ -47,6 +41,12 @@ const OrderDetailPage: React.FC = () => {
       setLoading(false);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadOrderDetail();
+    }
+  }, [id, loadOrderDetail]);
 
   const updateOrderStatus = async (newStatus: string) => {
     if (!order) return;
@@ -245,7 +245,7 @@ const OrderDetailPage: React.FC = () => {
                 <div className="flex-1">
                   <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">{order.item?.title || 'Product'}</h3>
                   <div className="flex items-center gap-4 text-sm mb-4">
-                    <span className="text-xl sm:text-2xl font-bold text-emerald-600">${parseFloat(order.item?.price || '0').toFixed(2)}</span>
+                    <span className="text-xl sm:text-2xl font-bold text-emerald-600">${order.item?.price?.toFixed(2) || '0.00'}</span>
                   </div>
                   <button
                     onClick={() => navigate(`/product/${order.itemId}`)}
@@ -318,7 +318,7 @@ const OrderDetailPage: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">Total Amount:</span>
-                  <span className="font-bold text-lg text-emerald-600">${parseFloat(order.total).toFixed(2)}</span>
+                  <span className="font-bold text-lg text-emerald-600">${order.total.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-500" />

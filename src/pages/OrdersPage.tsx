@@ -15,10 +15,6 @@ const OrdersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
-
   const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,6 +41,10 @@ const OrdersPage: React.FC = () => {
       setLoading(false);
     }
   }, [activeTab, statusFilter]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -248,7 +248,7 @@ const OrdersPage: React.FC = () => {
                         <div className="flex items-center gap-2 text-sm">
                           <DollarSign className="h-4 w-4 text-gray-500" />
                           <span className="text-gray-600">Total:</span>
-                          <span className="font-semibold text-gray-900">${parseFloat(order.total).toFixed(2)}</span>
+                          <span className="font-semibold text-gray-900">${order.total.toFixed(2)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <User className="h-4 w-4 text-gray-500" />

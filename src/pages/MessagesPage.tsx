@@ -1,16 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Loader, AlertCircle, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient, MessageThread } from '../lib/api';
+import { apiClient, Message as ApiMessage, MessageThread } from '../lib/api';
 
-interface Message {
-  id: string;
-  body?: string;
-  content?: string;
-  senderId: string;
-  createdAt: string;
-  isUser?: boolean;
-}
+type Message = ApiMessage & { isUser?: boolean };
 
 interface ThreadDisplay {
   id: string;
@@ -32,24 +25,21 @@ const MessagesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load all message threads on mount
-  useEffect(() => {
-    loadThreads();
-  }, []);
-
   // Load messages for selected thread
   const loadMessages = useCallback(async (threadId: string) => {
     try {
       const response = await apiClient.getMessages(threadId);
-      console.log('Messages response:', response);
-      
-      const messageList = (response.data || []).map((msg: Message, index: number) => ({
+      const messageList = (response.data || []).map((msg: Message) => ({
         ...msg,
-        content: msg.body || msg.content || '',
-        isUser: msg.senderId === user?.id || index % 2 === 0 // Fallback for demo
+        isUser: msg.senderId === user?.id
       }));
-      
+
       setMessages(messageList);
+      await Promise.all(
+        messageList
+          .filter((msg) => !msg.isRead && msg.senderId !== user?.id)
+          .map((msg) => apiClient.markMessageRead(msg.id))
+      );
     } catch (err) {
       console.error('Load messages error:', err);
       // Don't set error state for messages, just log it
@@ -67,13 +57,11 @@ const MessagesPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const loadThreads = async () => {
+  const loadThreads = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await apiClient.getMessageThreads();
-      console.log('Threads response:', response);
-      
       const threadList = response.data || [];
       
       // Transform threads to include participant names
@@ -97,18 +85,22 @@ const MessagesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load all message threads on mount
+  useEffect(() => {
+    loadThreads();
+  }, [loadThreads]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedThreadId) return;
 
     try {
       setSending(true);
-      console.log('Sending message:', { threadId: selectedThreadId, body: newMessage });
-      
       await apiClient.sendMessage(selectedThreadId, newMessage);
       setNewMessage('');
       await loadMessages(selectedThreadId);
+      await loadThreads();
     } catch (err) {
       console.error('Send message error:', err);
       setError('Failed to send message');
@@ -244,7 +236,7 @@ const MessagesPage: React.FC = () => {
                       }`}
                     >
                       <p className="break-words text-sm">
-                        {message.body || message.content || ''}
+                        {message.body || ''}
                       </p>
                       <p
                         className={`text-xs mt-1 ${

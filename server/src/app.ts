@@ -3,18 +3,29 @@ import cors from "cors";
 import path from "path";
 import { authenticate } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { requestIdMiddleware } from "./middleware/request-id.js";
 import { router } from "./routes/index.js";
 import { serverConfig } from "./config/env.js";
 import { getMetricsSnapshot, metricsMiddleware } from "./lib/metrics.js";
+import { prisma } from "./lib/prisma.js";
 
 export const createApp = () => {
   const app = express();
   app.use(cors({ origin: serverConfig.corsOrigins, credentials: true }));
+  app.use(requestIdMiddleware);
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(metricsMiddleware);
   app.use(authenticate);
   app.use("/uploads", express.static(path.resolve(serverConfig.uploadDir)));
+  app.get("/healthz", async (_req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: "ok" });
+    } catch {
+      res.status(503).json({ status: "error" });
+    }
+  });
   app.get("/api/version", (_req, res) => {
     res.json({
       data: {

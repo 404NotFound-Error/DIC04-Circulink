@@ -43,6 +43,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: () => void)
 
     logger.info(
       {
+        requestId: req.requestId,
         method: req.method,
         path: req.originalUrl,
         status: res.statusCode,
