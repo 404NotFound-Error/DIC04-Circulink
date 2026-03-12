@@ -1,29 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
-import { Item } from '../lib/api';
-
-const sampleProducts: Item[] = Array.from({ length: 8 }).map((_, i) => ({
-  id: `p-${i + 1}`,
-  title: `Sample Product ${i + 1}`,
-  description: 'A sample product for demonstration',
-  price: `${20 * (i + 1)}`,
-  condition: 'GOOD',
-  status: 'available',
-  categoryId: 'cat-1',
-  sellerId: 'seller-1',
-  images: [`https://via.placeholder.com/600x600?text=Item+${i + 1}`],
-  category: { id: 'cat-1', name: 'Electronics', slug: 'electronics', createdAt: new Date().toISOString() },
-  seller: { id: 'seller-1', email: 'seller@example.com', name: 'Sample Seller' },
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}));
+import { apiClient, Item } from '../lib/api';
 
 const BuyPage: React.FC = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.getItems({ status: 'ACTIVE', page: 1, pageSize: 24 });
+        setProducts(response.data || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const handleProductClick = (id: string) => {
-    console.log('product clicked', id);
+    navigate(`/product/${id}`);
   };
+
+  const firstRow = products.slice(0, 8);
+  const secondRow = products.slice(8, 16);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -35,13 +43,22 @@ const BuyPage: React.FC = () => {
 
         <hr className="border-t border-gray-200 mb-6" />
 
-        <section className="bg-emerald-50/60 rounded-xl p-8 mb-8">
-          <ProductGrid products={sampleProducts.slice(0,4)} onProductClick={handleProductClick} />
-        </section>
-
-        <section className="bg-emerald-50/60 rounded-xl p-8">
-          <ProductGrid products={sampleProducts.slice(4,8)} onProductClick={handleProductClick} />
-        </section>
+        {loading ? (
+          <div className="text-center py-20 text-gray-600">Loading products...</div>
+        ) : error ? (
+          <div className="text-center py-20 text-red-600">{error}</div>
+        ) : (
+          <>
+            <section className="bg-emerald-50/60 rounded-xl p-8 mb-8">
+              <ProductGrid products={firstRow} onProductClick={handleProductClick} />
+            </section>
+            {secondRow.length > 0 && (
+              <section className="bg-emerald-50/60 rounded-xl p-8">
+                <ProductGrid products={secondRow} onProductClick={handleProductClick} />
+              </section>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

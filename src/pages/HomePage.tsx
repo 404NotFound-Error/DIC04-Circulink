@@ -1,50 +1,50 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import CategorySection from '../components/CategorySection';
-
-// Sample data for categories
-const sampleProducts = [
-  {
-    id: '1',
-    title: 'Sample Product 1',
-    price: 99.99,
-    image: 'https://via.placeholder.com/300',
-    condition: 'GOOD',
-    location: 'Campus',
-    seller: 'User 1',
-  },
-  {
-    id: '2',
-    title: 'Sample Product 2',
-    price: 149.99,
-    image: 'https://via.placeholder.com/300',
-    condition: 'LIKE_NEW',
-    location: 'Campus',
-    seller: 'User 2',
-  },
-  {
-    id: '3',
-    title: 'Sample Product 3',
-    price: 79.99,
-    image: 'https://via.placeholder.com/300',
-    condition: 'GOOD',
-    location: 'Campus',
-    seller: 'User 3',
-  },
-  {
-    id: '4',
-    title: 'Sample Product 4',
-    price: 199.99,
-    image: 'https://via.placeholder.com/300',
-    condition: 'NEW',
-    location: 'Campus',
-    seller: 'User 4',
-  },
-];
+import { apiClient, Item } from '../lib/api';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadHomeItems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.getItems({ status: 'ACTIVE', page: 1, pageSize: 18 });
+        setItems(response.data || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load featured items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHomeItems();
+  }, []);
+
+  const mapped = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        image: item.images?.[0] || 'https://via.placeholder.com/300',
+        condition: item.condition,
+        seller: item.seller?.name || item.seller?.email || 'Seller'
+      })),
+    [items]
+  );
+
+  const sections = [
+    { title: '🔥 Featured Items', products: mapped.slice(0, 6), viewAll: '/products' },
+    { title: '✨ Recently Added', products: mapped.slice(6, 12), viewAll: '/products?sort=createdAt&order=desc' },
+    { title: '💸 Budget Picks', products: mapped.slice(12, 18), viewAll: '/products?sort=price&order=asc' }
+  ];
 
   return (
     <Layout>
@@ -86,48 +86,22 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Category Sections */}
-        <CategorySection
-          title="🧥 Clothing"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/clothing')}
-        />
-
-        <CategorySection
-          title="🪑 Furniture"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/furniture')}
-        />
-
-        <CategorySection
-          title="💻 Electronics"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/electronics')}
-        />
-
-        <CategorySection
-          title="📚 Office & Study Supplies"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/office-supplies')}
-        />
-
-        <CategorySection
-          title="🍕 Food & Snacks"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/food-snacks')}
-        />
-
-        <CategorySection
-          title="🧴 Daily Essentials"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/daily-essentials')}
-        />
-
-        <CategorySection
-          title="🎨 Art & Decor"
-          products={sampleProducts}
-          onViewAll={() => navigate('/category/art-decor')}
-        />
+        {loading ? (
+          <div className="text-center py-16 text-green-900">Loading featured items...</div>
+        ) : error ? (
+          <div className="text-center py-16 text-red-700">{error}</div>
+        ) : (
+          sections
+            .filter((section) => section.products.length > 0)
+            .map((section) => (
+              <CategorySection
+                key={section.title}
+                title={section.title}
+                products={section.products}
+                onViewAll={() => navigate(section.viewAll)}
+              />
+            ))
+        )}
 
         {/* Footer CTA */}
         <section className="w-full py-16 px-4 sm:px-6 lg:px-8">
