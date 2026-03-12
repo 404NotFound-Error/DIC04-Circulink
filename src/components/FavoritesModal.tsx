@@ -16,12 +16,6 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      loadFavorites();
-    }
-  }, [isOpen, user, loadFavorites]);
-
   const loadFavorites = useCallback(async () => {
     if (!user) return;
     
@@ -37,6 +31,12 @@ const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      loadFavorites();
+    }
+  }, [isOpen, user, loadFavorites]);
 
   const handleRemoveFavorite = async (favoriteId: string, itemId: string) => {
     try {
