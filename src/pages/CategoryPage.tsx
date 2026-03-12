@@ -20,6 +20,7 @@ const CategoryPage: React.FC = () => {
   // State
   const [products, setProducts] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -43,10 +44,13 @@ const CategoryPage: React.FC = () => {
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setCategoriesLoading(true);
         const response = await apiClient.getCategories();
         setCategories(response.data || []);
       } catch {
         setCategories([]);
+      } finally {
+        setCategoriesLoading(false);
       }
     };
     loadCategories();
@@ -75,6 +79,15 @@ const CategoryPage: React.FC = () => {
   // Fetch items for this category
   useEffect(() => {
     const fetchCategoryItems = async () => {
+      if (!categoryName) return;
+      if (!isAllCategory && categoriesLoading) return;
+      if (!isAllCategory && !matchedCategory) {
+        setProducts([]);
+        setTotalCount(0);
+        setError(null);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -97,10 +110,8 @@ const CategoryPage: React.FC = () => {
       }
     };
 
-    if (categoryName) {
-      fetchCategoryItems();
-    }
-  }, [categoryName, matchedCategory?.id, isAllCategory, page, sortBy, sortOrder]);
+    fetchCategoryItems();
+  }, [categoryName, categoriesLoading, matchedCategory, isAllCategory, page, sortBy, sortOrder]);
 
   const handleNavigateBack = () => {
     navigate('/');

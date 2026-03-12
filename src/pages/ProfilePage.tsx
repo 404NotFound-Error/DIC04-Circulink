@@ -352,9 +352,18 @@ const ProfilePage: React.FC = () => {
                     {myItems.map((item) => (
                       <div
                         key={item.id}
-                        className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => navigate(`/product/${item.id}`)}
                       >
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigate('/sell', { state: { editItemId: item.id } });
+                          }}
+                          className="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-white/95 text-gray-700 border border-gray-200 hover:bg-white text-xs font-medium"
+                        >
+                          Edit
+                        </button>
                         <img
                           src={item.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
                           alt={item.title}

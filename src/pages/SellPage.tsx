@@ -22,7 +22,11 @@ const SellPage: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const draft = (location.state as { draft?: SellDraftState } | null)?.draft;
+  const locationState = (location.state as { draft?: SellDraftState; editItemId?: string } | null);
+  const draft = locationState?.draft;
+  const editItemId = locationState?.editItemId;
+  const isEditMode = Boolean(editItemId);
+  const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
 
   // Form state
   const [title, setTitle] = useState<string>('');
@@ -31,13 +35,30 @@ const SellPage: React.FC = () => {
   const [originalPrice, setOriginalPrice] = useState<string>('');
   const [condition, setCondition] = useState<string>('GOOD');
   const [categoryId, setCategoryId] = useState<string>('');
+  const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(false);
   const [autoPriceReduce, setAutoPriceReduce] = useState(false);
   const [autoDonation, setAutoDonation] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  const normalizeImages = (images: unknown): string[] => {
+    if (Array.isArray(images)) return images.filter((image): image is string => typeof image === 'string');
+    if (typeof images === 'string') {
+      try {
+        const parsed = JSON.parse(images);
+        return Array.isArray(parsed) ? parsed.filter((image): image is string => typeof image === 'string') : (images ? [images] : []);
+      } catch {
+        return images ? [images] : [];
+      }
+    }
+    return [];
+  };
+
+  const resolveImageUrl = (url: string) => (url.startsWith('/uploads/') ? `${apiOrigin}${url}` : url);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -59,9 +80,41 @@ const SellPage: React.FC = () => {
     setOriginalPrice(draft.originalPrice ? String(draft.originalPrice) : '');
     setCondition(draft.condition || 'GOOD');
     setCategoryId(draft.categoryId || '');
+    setExistingImagePaths(draft.images || []);
     setAutoPriceReduce(Boolean(draft.autoPriceReduce));
     setAutoDonation(Boolean(draft.autoDonation));
   }, [draft]);
+
+  useEffect(() => {
+    if (!isEditMode || !editItemId) return;
+
+    const loadItemForEdit = async () => {
+      try {
+        setLoadingItem(true);
+        setError(null);
+        const response = await apiClient.getItem(editItemId);
+        const item = response.data;
+        setTitle(item.title || '');
+        setDescription(item.description || '');
+        setCurrentPrice(String(item.price ?? ''));
+        // Pre-fill original price with current saved price when legacy value is unavailable.
+        setOriginalPrice(String(item.price ?? ''));
+        setCondition(item.condition || 'GOOD');
+        setCategoryId(item.categoryId || '');
+        setExistingImagePaths(normalizeImages(item.images));
+        setSelectedFiles([]);
+        setPreviewUrls([]);
+        setAutoPriceReduce(false);
+        setAutoDonation(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load item for edit');
+      } finally {
+        setLoadingItem(false);
+      }
+    };
+
+    loadItemForEdit();
+  }, [editItemId, isEditMode]);
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
@@ -79,7 +132,7 @@ const SellPage: React.FC = () => {
       setError('Each image must be under 10MB');
       return;
     }
-    if (selectedFiles.length + imageFiles.length > 5) {
+    if (existingImagePaths.length + selectedFiles.length + imageFiles.length > 5) {
       setError('You can upload at most 5 images');
       return;
     }
@@ -98,6 +151,15 @@ const SellPage: React.FC = () => {
       setPreviewUrls((prev) => [...prev, ...urls]);
       setError(null);
     });
+  };
+
+  const handleRemoveExistingImage = (index: number) => {
+    setExistingImagePaths((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewImage = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleNext = async () => {
@@ -121,7 +183,7 @@ const SellPage: React.FC = () => {
       setError('Please select a category');
       return;
     }
-    if (selectedFiles.length === 0) {
+    if (existingImagePaths.length + selectedFiles.length === 0) {
       setError('Please upload at least one image');
       return;
     }
@@ -135,7 +197,22 @@ const SellPage: React.FC = () => {
         uploadedPaths.push(response.data.path);
       }
 
-      const draft: SellDraftState = {
+      const finalImages = [...existingImagePaths, ...uploadedPaths];
+
+      if (isEditMode && editItemId) {
+        await apiClient.updateItem(editItemId, {
+          title: title.trim(),
+          description: description.trim(),
+          price: Number(currentPrice),
+          condition,
+          categoryId,
+          images: finalImages,
+        });
+        navigate('/profile');
+        return;
+      }
+
+      const nextDraft: SellDraftState = {
         title: title.trim(),
         description: description.trim(),
         currentPrice: Number(currentPrice),
@@ -143,13 +220,13 @@ const SellPage: React.FC = () => {
         condition,
         categoryId,
         categoryName: categories.find((category) => category.id === categoryId)?.name,
-        images: uploadedPaths,
+        images: finalImages,
         autoPriceReduce,
         autoDonation
       };
-      navigate('/sell/review', { state: { draft } });
+      navigate('/sell/review', { state: { draft: nextDraft } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload images');
+      setError(err instanceof Error ? err.message : (isEditMode ? 'Failed to update item' : 'Failed to upload images'));
     } finally {
       setUploading(false);
     }
@@ -160,7 +237,7 @@ const SellPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-start mb-6">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(isEditMode ? '/profile' : '/')}
             className="mr-6 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm md:text-base"
           >
             Back
@@ -169,7 +246,9 @@ const SellPage: React.FC = () => {
 
         <div className="mb-8">
           <div className="inline-block bg-emerald-50 border-2 border-emerald-200 rounded-full px-8 md:px-12 py-3 md:py-4 shadow-[0_8px_0_rgba(16,185,129,0.08)]">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-800">Sell Your Item</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-800">
+              {isEditMode ? 'Edit Your Item' : 'Sell Your Item'}
+            </h1>
           </div>
         </div>
 
@@ -206,10 +285,38 @@ const SellPage: React.FC = () => {
                 <span className="text-lg">⭐</span>
                 <span>AI Recognition</span>
               </button>
-              {previewUrls.length > 0 && (
-                <p className="mt-3 text-xs text-emerald-800">{previewUrls.length} image(s) selected</p>
+              {(existingImagePaths.length > 0 || previewUrls.length > 0) && (
+                <p className="mt-3 text-xs text-emerald-800">{existingImagePaths.length + previewUrls.length} image(s) selected</p>
               )}
             </div>
+            {(existingImagePaths.length > 0 || previewUrls.length > 0) && (
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {existingImagePaths.map((image, index) => (
+                  <div key={`existing-${image}-${index}`} className="relative">
+                    <img src={resolveImageUrl(image)} alt={`existing-${index}`} className="h-20 w-full object-cover rounded-lg border border-emerald-200" />
+                    <button
+                      onClick={() => handleRemoveExistingImage(index)}
+                      className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full px-1.5 text-xs"
+                      disabled={uploading}
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+                {previewUrls.map((image, index) => (
+                  <div key={`new-${index}`} className="relative">
+                    <img src={image} alt={`new-${index}`} className="h-20 w-full object-cover rounded-lg border border-emerald-200" />
+                    <button
+                      onClick={() => handleRemoveNewImage(index)}
+                      className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full px-1.5 text-xs"
+                      disabled={uploading}
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -342,16 +449,16 @@ const SellPage: React.FC = () => {
         <div className="flex justify-center mb-6">
           <button
             onClick={handleNext}
-            disabled={uploading}
+            disabled={uploading || loadingItem}
             className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors shadow-lg text-sm md:text-base"
           >
-            {uploading ? (
+            {uploading || loadingItem ? (
               <span className="inline-flex items-center gap-2">
                 <Loader className="h-4 w-4 animate-spin" />
-                Uploading...
+                {loadingItem ? 'Loading...' : isEditMode ? 'Saving...' : 'Uploading...'}
               </span>
             ) : (
-              'Next: Review Your Item'
+              isEditMode ? 'Save Changes' : 'Next: Review Your Item'
             )}
           </button>
         </div>
