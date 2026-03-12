@@ -58,13 +58,6 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
     }
   }, [isOpen]);
 
-  // Cleanup on close
-  useEffect(() => {
-    if (!isOpen) {
-      resetForm();
-    }
-  }, [isOpen]);
-
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -79,6 +72,13 @@ const NewItemModal: React.FC<NewItemModalProps> = ({ isOpen, onClose, onSuccess 
       fileInputRef.current.value = '';
     }
   };
+
+  // Cleanup on close
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};

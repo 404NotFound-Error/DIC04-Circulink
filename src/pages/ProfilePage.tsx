@@ -44,14 +44,6 @@ const ProfilePage: React.FC = () => {
     }
   }, [profile]);
 
-  useEffect(() => {
-    if (activeTab === 'items' && myItems.length === 0) {
-      loadMyItems();
-    } else if (activeTab === 'favorites' && myFavorites.length === 0) {
-      loadMyFavorites();
-    }
-  }, [activeTab, loadMyFavorites, loadMyItems, myFavorites.length, myItems.length]);
-
   const loadMyItems = useCallback(async () => {
     if (!profile) return;
     setItemsLoading(true);
@@ -80,6 +72,14 @@ const ProfilePage: React.FC = () => {
       setFavoritesLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'items' && myItems.length === 0) {
+      loadMyItems();
+    } else if (activeTab === 'favorites' && myFavorites.length === 0) {
+      loadMyFavorites();
+    }
+  }, [activeTab, loadMyFavorites, loadMyItems, myFavorites.length, myItems.length]);
 
   const handleSignOut = async () => {
     await signOut();
