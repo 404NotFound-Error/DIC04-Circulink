@@ -50,6 +50,10 @@ const mimeByExt: Record<string, string> = {
 
 const round2 = (num: number) => Math.round(num * 100) / 100;
 const clamp = (num: number, min: number, max: number) => Math.min(max, Math.max(min, num));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const LLM_REQUEST_TIMEOUT_MS = 45_000;
+const LLM_MAX_RETRIES = 2;
 
 const isStandaloneMarker = (marker: number) =>
   marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9);
@@ -345,6 +349,60 @@ const normalizeBaseUrl = (url: string) =>
 
 const shouldSkipResponsesEndpoint = (baseUrl: string) => /siliconflow\.(cn|com)/i.test(baseUrl);
 
+const isRetriableNetworkError = (err: unknown) => {
+  if (!(err instanceof Error)) return false;
+  const message = err.message.toLowerCase();
+  if (
+    message.includes("fetch failed") ||
+    message.includes("other side closed") ||
+    message.includes("socket") ||
+    message.includes("timeout")
+  ) {
+    return true;
+  }
+  const cause = (err as { cause?: unknown }).cause;
+  if (cause && typeof cause === "object") {
+    const code = (cause as { code?: unknown }).code;
+    if (typeof code === "string" && ["ECONNRESET", "ETIMEDOUT", "EPIPE", "UND_ERR_SOCKET"].includes(code)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const fetchWithRetry = async (
+  url: string,
+  init: RequestInit
+) => {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= LLM_MAX_RETRIES; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(LLM_REQUEST_TIMEOUT_MS)
+      });
+      if ((response.status >= 500 || response.status === 429 || response.status === 408) && attempt < LLM_MAX_RETRIES) {
+        logger.warn(
+          { url, status: response.status, attempt: attempt + 1 },
+          "LLM request got retriable HTTP status, retrying"
+        );
+        await sleep(400 * (attempt + 1));
+        continue;
+      }
+      return response;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < LLM_MAX_RETRIES && isRetriableNetworkError(err)) {
+        logger.warn({ err, url, attempt: attempt + 1 }, "LLM request network error, retrying");
+        await sleep(400 * (attempt + 1));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("LLM request failed after retries");
+};
+
 const requestByResponsesApi = async (
   baseUrl: string,
   apiKey: string,
@@ -352,7 +410,7 @@ const requestByResponsesApi = async (
   prompt: string,
   imageDataUrls: string[]
 ) => {
-  const response = await fetch(`${baseUrl}/responses`, {
+  const response = await fetchWithRetry(`${baseUrl}/responses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -426,7 +484,7 @@ const requestByChatCompletionsApi = async (
   prompt: string,
   imageDataUrls: string[]
 ) => {
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetchWithRetry(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
