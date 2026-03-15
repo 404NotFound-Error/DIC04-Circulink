@@ -403,7 +403,13 @@ const requestByResponsesApi = async (
     })
   });
   if (!response.ok) {
-    throw new Error(`responses API failed: ${response.status} ${await response.text()}`);
+    const bodyText = await response.text();
+    if (response.status === 401) {
+      throw new Error(
+        `responses API failed: 401 Unauthorized. Check OPENAI_API_KEY and OPENAI_BASE_URL pair. Raw: ${bodyText}`
+      );
+    }
+    throw new Error(`responses API failed: ${response.status} ${bodyText}`);
   }
   const payload = (await response.json()) as unknown;
   const rawText = extractOutputText(payload);
@@ -471,7 +477,13 @@ const requestByChatCompletionsApi = async (
     })
   });
   if (!response.ok) {
-    throw new Error(`chat/completions API failed: ${response.status} ${await response.text()}`);
+    const bodyText = await response.text();
+    if (response.status === 401) {
+      throw new Error(
+        `chat/completions API failed: 401 Unauthorized. Check OPENAI_API_KEY and OPENAI_BASE_URL pair. Raw: ${bodyText}`
+      );
+    }
+    throw new Error(`chat/completions API failed: ${response.status} ${bodyText}`);
   }
   const payload = (await response.json()) as unknown;
   const rawText = extractChatMessageText(payload);

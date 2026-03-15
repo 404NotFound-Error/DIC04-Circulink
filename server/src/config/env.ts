@@ -19,7 +19,13 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4.1-mini")
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.parse(process.env);
+export const env = {
+  ...parsedEnv,
+  OPENAI_API_KEY: parsedEnv.OPENAI_API_KEY?.trim(),
+  OPENAI_BASE_URL: parsedEnv.OPENAI_BASE_URL.trim(),
+  OPENAI_MODEL: parsedEnv.OPENAI_MODEL.trim()
+};
 
 export const serverConfig = {
   port: parseInt(env.PORT, 10) || 4000,
