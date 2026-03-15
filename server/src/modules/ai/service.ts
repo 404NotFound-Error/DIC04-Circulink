@@ -303,6 +303,39 @@ const sanitizeJsonControlChars = (raw: string) => {
   return result;
 };
 
+const toFiniteNumber = (value: unknown): number | null => {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+const repairInvalidPricing = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") return payload;
+  const data = { ...(payload as Record<string, unknown>) };
+  let repaired = false;
+
+  const suggestedPrice = toFiniteNumber(data.suggestedPrice);
+  if (suggestedPrice !== null && suggestedPrice <= 0) {
+    data.suggestedPrice = 0.01;
+    repaired = true;
+  }
+
+  const minimumAcceptablePrice = toFiniteNumber(data.minimumAcceptablePrice);
+  if (minimumAcceptablePrice !== null && minimumAcceptablePrice <= 0) {
+    data.minimumAcceptablePrice = 0.01;
+    repaired = true;
+  }
+
+  if (repaired) {
+    const warnings = Array.isArray(data.warnings)
+      ? data.warnings.filter((item): item is string => typeof item === "string")
+      : [];
+    warnings.push("Price normalized from non-positive model output.");
+    data.warnings = warnings;
+  }
+
+  return data;
+};
+
 const parseSuggestionFromText = (text: string) => {
   const normalized = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   const start = normalized.indexOf("{");
@@ -310,10 +343,13 @@ const parseSuggestionFromText = (text: string) => {
   const jsonText = start >= 0 && end > start ? normalized.slice(start, end + 1) : normalized;
 
   try {
-    return llmResponseSchema.parse(JSON.parse(jsonText));
-  } catch {
+    return llmResponseSchema.parse(repairInvalidPricing(JSON.parse(jsonText)));
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      throw err;
+    }
     const sanitized = sanitizeJsonControlChars(jsonText);
-    return llmResponseSchema.parse(JSON.parse(sanitized));
+    return llmResponseSchema.parse(repairInvalidPricing(JSON.parse(sanitized)));
   }
 };
 
@@ -332,6 +368,7 @@ const buildPrompt = (
     "Return JSON only and match this schema exactly.",
     "Condition must be one of: NEW, LIKE_NEW, GOOD, FAIR.",
     "Pricing rule: minimumAcceptablePrice must be <= suggestedPrice and both > 0.",
+    "Never return zero/negative prices. If uncertain, use 0.01 as minimum positive value.",
     "Pick categorySlug from this list only:",
     categoryHint,
     userHint ? `Seller hint: ${userHint}` : ""
