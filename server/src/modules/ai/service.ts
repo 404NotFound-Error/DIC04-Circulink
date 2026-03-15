@@ -343,7 +343,7 @@ const normalizeBaseUrl = (url: string) =>
     .replace(/\/responses$/i, "")
     .replace(/\/chat\/completions$/i, "");
 
-const shouldSkipResponsesEndpoint = (baseUrl: string) => /siliconflow\.cn/i.test(baseUrl);
+const shouldSkipResponsesEndpoint = (baseUrl: string) => /siliconflow\.(cn|com)/i.test(baseUrl);
 
 const requestByResponsesApi = async (
   baseUrl: string,

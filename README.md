@@ -133,7 +133,7 @@ OPENAI_MODEL=gpt-4.1-mini
 
 ```env
 OPENAI_API_KEY=sk-xxxx
-OPENAI_BASE_URL=https://api.siliconflow.cn/v1
+OPENAI_BASE_URL=https://api.siliconflow.com/v1
 OPENAI_MODEL=<your-siliconflow-model-id>
 ```
 
