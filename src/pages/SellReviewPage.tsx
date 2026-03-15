@@ -26,12 +26,6 @@ const SellReviewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
   const resolveImageUrl = (url: string) => (url.startsWith('/uploads/') ? `${apiOrigin}${url}` : url);
-  const reducedPriceAfter7Days = itemData.autoPriceReduce
-    ? Math.max(
-      itemData.currentPrice * 0.9,
-      itemData.minimumAcceptablePrice ?? 0
-    )
-    : null;
 
   if (!itemData) {
     return (
@@ -50,6 +44,13 @@ const SellReviewPage: React.FC = () => {
       </div>
     );
   }
+
+  const reducedPriceAfter7Days = itemData.autoPriceReduce
+    ? Math.max(
+      itemData.currentPrice * 0.9,
+      itemData.minimumAcceptablePrice ?? 0
+    )
+    : null;
 
   const handleAccept = async () => {
     if (!itemData) return;
