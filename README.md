@@ -109,9 +109,13 @@ VITE_TEST_PASSWORD=password123
 VITE_ENABLE_DEV_AUTO_LOGIN=false
 
 # Backend
+NODE_ENV=development
 DATABASE_URL=postgresql://user:pass@localhost:5432/circulink
 JWT_SECRET=your-secret-key-change-in-production
 JWT_REFRESH_SECRET=your-refresh-secret-change-in-production
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL=7d
+BCRYPT_ROUNDS=10
 PORT=4000
 CORS_ORIGIN=http://localhost:5173
 UPLOAD_DIR=uploads
@@ -120,13 +124,20 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
-可选后端变量（有默认值）：
-- `JWT_ACCESS_TTL`（默认 `15m`）
-- `JWT_REFRESH_TTL`（默认 `7d`）
-- `BCRYPT_ROUNDS`（默认 `10`）
-- `OPENAI_API_KEY`（配置后启用 LLM 图片识别；未配置时使用本地启发式兜底）
-- `OPENAI_BASE_URL`（默认 `https://api.openai.com/v1`，可替换为硅基流动等 OpenAI 兼容网关）
-- `OPENAI_MODEL`（默认 `gpt-4.1-mini`）
+后端变量说明：
+- `OPENAI_API_KEY`：配置后启用 LLM 图片识别；未配置时使用本地启发式兜底
+- `OPENAI_BASE_URL`：默认 `https://api.openai.com/v1`，支持 OpenAI 兼容网关
+- `OPENAI_MODEL`：默认 `gpt-4.1-mini`
+
+硅基流动（OpenAI 兼容）示例：
+
+```env
+OPENAI_API_KEY=sk-xxxx
+OPENAI_BASE_URL=https://api.siliconflow.cn/v1
+OPENAI_MODEL=<your-siliconflow-model-id>
+```
+
+注意：`OPENAI_BASE_URL` 只填到 `/v1`，不要填写 `/chat/completions` 或 `/responses`。
 
 ### 5.3 初始化数据库
 
