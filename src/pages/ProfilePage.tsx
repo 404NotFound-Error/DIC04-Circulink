@@ -2,15 +2,116 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { LogOut, Edit2, Save, X, Package, Heart, ShoppingBag } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit2,
+  Save,
+  X,
+  Package,
+  Heart,
+  ShoppingBag,
+  LogOut,
+  Mail,
+  GraduationCap,
+  Phone,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
 import { signOut, updateProfile as updateBackendProfile } from '../lib/backend';
 import { apiClient } from '../lib/api';
 import type { Item } from '../lib/api';
+
 interface Favorite {
   id: string;
   itemId: string;
   item: Item;
 }
+
+interface ProfileFieldProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  hint?: string;
+  isEditing?: boolean;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+}
+
+const pageBackgroundStyle = {
+  background: 'linear-gradient(to bottom, #B7D9B2, #5BC4B0, #289E8C)'
+};
+
+const glassCardStyle = {
+  background: 'rgba(255,255,255,0.28)',
+  borderColor: 'rgba(255,255,255,0.58)',
+  boxShadow: '0 24px 60px rgba(14,72,63,0.1)',
+  backdropFilter: 'blur(14px)',
+  WebkitBackdropFilter: 'blur(14px)'
+};
+
+const glassSoftStyle = {
+  background: 'rgba(255,255,255,0.24)',
+  borderColor: 'rgba(255,255,255,0.48)',
+  boxShadow: '0 16px 36px rgba(14,72,63,0.08)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)'
+};
+
+const glassInputClass = 'mt-2 w-full rounded-2xl border border-white/55 bg-white/74 px-4 py-3 text-[#173b2b] shadow-[inset_0_1px_0_rgba(255,255,255,0.42)] placeholder:text-[#64806d] focus:border-[#f28b54] focus:outline-none';
+const subtleButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-white/55 bg-white/42 px-5 py-2.5 text-sm font-semibold text-[#24533a] shadow-[0_14px_30px_rgba(14,72,63,0.08)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/58';
+const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-[#1f6a3d] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(27,79,49,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#185532] disabled:cursor-not-allowed disabled:opacity-60';
+const destructiveButtonClass = 'inline-flex items-center justify-center gap-2 rounded-full bg-[#d95b52] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(160,57,49,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#bf473f]';
+
+const getStatusBadgeClass = (status?: string) => {
+  switch (status) {
+    case 'ACTIVE':
+    case 'AVAILABLE':
+      return 'border border-[#8fb48d] bg-[#dff0d8] text-[#25583b]';
+    case 'SOLD':
+      return 'border border-gray-300 bg-gray-100 text-gray-700';
+    default:
+      return 'border border-[#d4c58f] bg-[#fff4cf] text-[#87671d]';
+  }
+};
+
+const ProfileField: React.FC<ProfileFieldProps> = ({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  isEditing = false,
+  onChange,
+  placeholder,
+  type = 'text',
+}) => {
+  return (
+    <div className="rounded-[1.35rem] border p-4" style={glassSoftStyle}>
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-white/50 bg-white/44 text-orange-700 shadow-sm">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#5d7768]">
+            {label}
+          </label>
+          {isEditing && onChange ? (
+            <input
+              type={type}
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              className={glassInputClass}
+              placeholder={placeholder}
+            />
+          ) : (
+            <p className="mt-2 break-words text-base font-medium text-[#173b2b]">{value}</p>
+          )}
+          {hint ? <p className="mt-2 text-xs text-[#6a8477]">{hint}</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,15 +121,11 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Edit form state
   const [editForm, setEditForm] = useState({
     name: '',
     phone: '',
     university: '',
   });
-
-  // Items and favorites state
   const [myItems, setMyItems] = useState<Item[]>([]);
   const [myFavorites, setMyFavorites] = useState<Favorite[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
@@ -51,7 +148,7 @@ const ProfilePage: React.FC = () => {
       const response = await apiClient.getItems({
         sellerId: profile.id,
         page: 1,
-        pageSize: 100
+        pageSize: 100,
       });
       setMyItems(response.data || []);
     } catch (err) {
@@ -88,7 +185,6 @@ const ProfilePage: React.FC = () => {
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Cancel editing, reset form
       setEditForm({
         name: profile?.full_name || '',
         phone: profile?.phone || '',
@@ -111,7 +207,7 @@ const ProfilePage: React.FC = () => {
       await updateBackendProfile(profile!.id, {
         full_name: editForm.name,
         phone: editForm.phone,
-        university: editForm.university
+        university: editForm.university,
       });
       await refreshProfile();
       setIsEditing(false);
@@ -122,206 +218,224 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const renderLoadingBlock = (message: string) => (
+    <div className="rounded-[1.8rem] border p-10 text-center" style={glassCardStyle}>
+      <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-white/50 border-b-[#1f6a3d]" />
+      <p className="mt-4 text-[#476656]">{message}</p>
+    </div>
+  );
+
+  const renderEmptyState = (
+    icon: typeof Package,
+    message: string,
+    buttonLabel: string,
+    onClick: () => void,
+  ) => {
+    const Icon = icon;
+    return (
+      <div className="rounded-[1.8rem] border p-10 text-center" style={glassCardStyle}>
+        <Icon className="mx-auto mb-4 h-16 w-16 text-[#6f8d7c]" />
+        <p className="mb-5 text-[#476656]">{message}</p>
+        <button onClick={onClick} className={primaryButtonClass}>
+          {buttonLabel}
+        </button>
+      </div>
+    );
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(to bottom, #b4edc6, #bfe7e5)' }}>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('profile')}</h1>
-          <p className="text-gray-600 mb-6">{lang === 'zh' ? '请先登录后查看个人资料' : 'Please sign in to view your profile'}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-          >
-            {lang === 'zh' ? '返回首页' : 'Back to Home'}
-          </button>
+      <div className="relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:px-8" style={pageBackgroundStyle}>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-[-6rem] top-16 h-72 w-72 rounded-full bg-white/16 blur-3xl" />
+          <div className="absolute right-[-4rem] top-28 h-80 w-80 rounded-full bg-[#dff7ea]/28 blur-3xl" />
+          <div className="absolute bottom-[-4rem] left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#3bb9a2]/20 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto flex min-h-[70vh] max-w-2xl items-center justify-center">
+          <div className="w-full rounded-[2rem] border p-8 text-center" style={glassCardStyle}>
+            <h1 className="text-3xl font-bold text-[#173b2b]">{t('profile')}</h1>
+            <p className="mb-6 mt-4 text-lg text-[#355c46]">
+              {lang === 'zh' ? '请先登录后查看个人资料' : 'Please sign in to view your profile'}
+            </p>
+            <button onClick={() => navigate('/')} className={primaryButtonClass}>
+              <ArrowLeft className="h-4 w-4" />
+              {lang === 'zh' ? '返回首页' : 'Back to Home'}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8" style={{ background: 'linear-gradient(to bottom, #b4edc6, #bfe7e5)' }}>
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => navigate('/')}
-          className="mb-6 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          ← {t('back')}
+    <div className="relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 lg:px-8" style={pageBackgroundStyle}>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-6rem] top-16 h-72 w-72 rounded-full bg-white/16 blur-3xl" />
+        <div className="absolute right-[-4rem] top-28 h-80 w-80 rounded-full bg-[#dff7ea]/28 blur-3xl" />
+        <div className="absolute bottom-[-4rem] left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#3bb9a2]/20 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-5xl space-y-6">
+        <button onClick={() => navigate('/')} className={`${subtleButtonClass} mb-6`}>
+          <ArrowLeft className="h-4 w-4" />
+          {t('back')}
         </button>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-6 py-6 sm:py-8">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="rounded-[2rem] border p-6 sm:p-8" style={glassCardStyle}>
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col items-center gap-5 text-center md:flex-row md:text-left">
               <img
                 src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=F97316&color=fff&size=128`}
                 alt={profile?.full_name}
-                className="w-20 sm:w-24 h-20 sm:h-24 rounded-full border-4 border-white flex-shrink-0"
+                className="h-24 w-24 rounded-full border-4 border-white shadow-[0_16px_40px_rgba(14,72,63,0.16)] sm:h-28 sm:w-28"
               />
-              <div className="text-white text-center sm:text-left">
-                <h1 className="text-2xl sm:text-3xl font-bold">{profile?.full_name}</h1>
-                <p className="text-orange-100 text-sm">{profile?.university || (lang === 'zh' ? '未设置学校' : 'No university set')}</p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6a8477]">
+                  {lang === 'zh' ? '个人中心' : 'Profile Hub'}
+                </p>
+                <h1 className="mt-2 text-3xl font-bold text-[#173b2b] sm:text-4xl">{profile?.full_name}</h1>
+                <p className="mt-2 text-[#476656]">{profile?.email}</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-3 md:justify-start">
+                  <span className="rounded-full border border-white/55 bg-white/30 px-4 py-2 text-sm font-medium text-[#355c46]">
+                    {profile?.university || (lang === 'zh' ? '未设置学校' : 'No university set')}
+                  </span>
+                  <span className="rounded-full border border-white/55 bg-white/30 px-4 py-2 text-sm font-medium text-[#355c46]">
+                    {profile?.phone || (lang === 'zh' ? '未填写手机号' : 'No phone added')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-[1.1rem] border px-4 py-4" style={glassSoftStyle}>
+                <p className="text-2xl font-bold text-[#173b2b]">{myItems.length}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6a8477]">
+                  {lang === 'zh' ? '商品' : 'Items'}
+                </p>
+              </div>
+              <div className="rounded-[1.1rem] border px-4 py-4" style={glassSoftStyle}>
+                <p className="text-2xl font-bold text-[#173b2b]">{myFavorites.length}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6a8477]">
+                  {lang === 'zh' ? '收藏' : 'Favorites'}
+                </p>
+              </div>
+              <div className="rounded-[1.1rem] border px-4 py-4" style={glassSoftStyle}>
+                <p className="text-2xl font-bold text-[#173b2b]">{isEditing ? '…' : '1'}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#6a8477]">
+                  {lang === 'zh' ? '资料' : 'Profile'}
+                </p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <div className="flex">
+        <div className="grid grid-cols-3 gap-2 rounded-[1.2rem] border p-2" style={glassSoftStyle}>
+          {[
+            { key: 'info', label: t('accountInfo'), icon: Edit2 },
+            { key: 'items', label: t('myItems'), icon: Package },
+            { key: 'favorites', label: t('myFavorites'), icon: Heart },
+          ].map(({ key, label, icon: Icon }) => {
+            const active = activeTab === key;
+            return (
               <button
-                onClick={() => setActiveTab('info')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
-                  activeTab === 'info'
-                    ? 'text-orange-600 border-b-2 border-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                key={key}
+                onClick={() => setActiveTab(key as 'info' | 'items' | 'favorites')}
+                className={`flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 sm:text-base ${
+                  active
+                    ? 'bg-white/72 text-orange-700 shadow-[0_10px_24px_rgba(14,72,63,0.08)]'
+                    : 'text-[#28513b] hover:bg-white/28'
                 }`}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <Edit2 className="h-4 w-4" />
-                  <span>{t('accountInfo')}</span>
-                </div>
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
               </button>
-              <button
-                onClick={() => setActiveTab('items')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
-                  activeTab === 'items'
-                    ? 'text-orange-600 border-b-2 border-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Package className="h-4 w-4" />
-                  <span>{t('myItems')}</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('favorites')}
-                className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
-                  activeTab === 'favorites'
-                    ? 'text-orange-600 border-b-2 border-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Heart className="h-4 w-4" />
-                  <span>{t('myFavorites')}</span>
-                </div>
-              </button>
-            </div>
-          </div>
+            );
+          })}
+        </div>
 
-          {/* Content */}
-          <div className="px-6 py-8">
+        <div className="rounded-[2rem] border p-6 sm:p-8" style={glassCardStyle}>
             {activeTab === 'info' && (
               <div className="space-y-6">
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error ? (
+                  <div className="rounded-[1.4rem] border border-red-200 bg-red-50/90 px-4 py-3 text-red-700 shadow-sm">
                     {error}
                   </div>
-                )}
+                ) : null}
 
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">{t('accountInfo')}</h2>
-                  <button
-                    onClick={handleEditToggle}
-                    className="flex items-center space-x-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#173b2b]">{t('accountInfo')}</h2>
+                    <p className="mt-1 text-sm text-[#5a7864]">
+                      {lang === 'zh' ? '更新你的基础资料与联系方式。' : 'Update your account details and contact information.'}
+                    </p>
+                  </div>
+                  <button onClick={handleEditToggle} className={subtleButtonClass}>
                     {isEditing ? (
                       <>
                         <X className="h-4 w-4" />
-                        <span>{t('cancel')}</span>
+                        {t('cancel')}
                       </>
                     ) : (
                       <>
                         <Edit2 className="h-4 w-4" />
-                        <span>{t('edit')}</span>
+                        {t('edit')}
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('name')}</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder={lang === 'zh' ? '请输入姓名' : 'Enter your name'}
-                      />
-                    ) : (
-                      <p className="text-gray-900">{profile?.full_name}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
-                    <p className="text-gray-900">{profile?.email || t('notProvided')}</p>
-                    <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '邮箱不可修改' : 'Email cannot be changed'}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('university')}</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.university}
-                        onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder={lang === 'zh' ? '请输入学校' : 'Enter your university'}
-                      />
-                    ) : (
-                      <p className="text-gray-900">{profile?.university || t('notProvided')}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('phone')}</label>
-                    {isEditing ? (
-                      <input
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder={lang === 'zh' ? '请输入手机号' : 'Enter your phone number'}
-                      />
-                    ) : (
-                      <p className="text-gray-900">{profile?.phone || t('notProvided')}</p>
-                    )}
-                  </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ProfileField
+                    icon={UserRound}
+                    label={t('name')}
+                    value={isEditing ? editForm.name : (profile?.full_name || t('notProvided'))}
+                    isEditing={isEditing}
+                    onChange={(value) => setEditForm({ ...editForm, name: value })}
+                    placeholder={lang === 'zh' ? '请输入姓名' : 'Enter your name'}
+                  />
+                  <ProfileField
+                    icon={Mail}
+                    label={t('email')}
+                    value={profile?.email || t('notProvided')}
+                    hint={lang === 'zh' ? '邮箱不可修改' : 'Email cannot be changed'}
+                  />
+                  <ProfileField
+                    icon={GraduationCap}
+                    label={t('university')}
+                    value={isEditing ? editForm.university : (profile?.university || t('notProvided'))}
+                    isEditing={isEditing}
+                    onChange={(value) => setEditForm({ ...editForm, university: value })}
+                    placeholder={lang === 'zh' ? '请输入学校' : 'Enter your university'}
+                  />
+                  <ProfileField
+                    icon={Phone}
+                    label={t('phone')}
+                    value={isEditing ? editForm.phone : (profile?.phone || t('notProvided'))}
+                    isEditing={isEditing}
+                    onChange={(value) => setEditForm({ ...editForm, phone: value })}
+                    placeholder={lang === 'zh' ? '请输入手机号' : 'Enter your phone number'}
+                    type="tel"
+                  />
                 </div>
 
-                {isEditing && (
-                  <button
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:bg-gray-400"
-                  >
-                    <Save className="h-5 w-5" />
-                    <span>{loading ? t('saving') : t('saveChanges')}</span>
+                {isEditing ? (
+                  <button onClick={handleSave} disabled={loading} className={`${primaryButtonClass} w-full`}>
+                    <Save className="h-4 w-4" />
+                    {loading ? t('saving') : t('saveChanges')}
                   </button>
-                )}
+                ) : null}
 
-                <hr className="border-gray-200" />
-
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('quickActions')}</h2>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => navigate('/orders')}
-                      className="w-full flex items-center space-x-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <ShoppingBag className="h-5 w-5 text-gray-600" />
-                      <span className="text-gray-900">{t('myOrders')}</span>
+                <div className="border-t border-white/35 pt-6">
+                  <h2 className="text-xl font-bold text-[#173b2b]">{t('quickActions')}</h2>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <button onClick={() => navigate('/orders')} className={`${subtleButtonClass} w-full justify-start px-5 py-4`}>
+                      <ShoppingBag className="h-5 w-5" />
+                      {t('myOrders')}
                     </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center space-x-3 px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
+                    <button onClick={handleSignOut} className={`${destructiveButtonClass} w-full justify-start px-5 py-4`}>
                       <LogOut className="h-5 w-5" />
-                      <span>{t('signOut')}</span>
+                      {t('signOut')}
                     </button>
                   </div>
                 </div>
@@ -330,29 +444,29 @@ const ProfilePage: React.FC = () => {
 
             {activeTab === 'items' && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('myItems')}</h2>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-[#173b2b]">{t('myItems')}</h2>
+                  <p className="mt-1 text-sm text-[#5a7864]">
+                    {lang === 'zh' ? '查看和管理你已经发布的商品。' : 'Review and manage the items you have listed.'}
+                  </p>
+                </div>
+
                 {itemsLoading ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                    <p className="mt-2 text-gray-600">{lang === 'zh' ? '正在加载商品...' : 'Loading items...'}</p>
-                  </div>
+                  renderLoadingBlock(lang === 'zh' ? '正在加载商品...' : 'Loading items...')
                 ) : myItems.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">{lang === 'zh' ? '你还没有发布商品' : "You haven't listed any items yet"}</p>
-                    <button
-                      onClick={() => navigate('/sell')}
-                      className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                    >
-                      {t('listFirstItem')}
-                    </button>
-                  </div>
+                  renderEmptyState(
+                    Package,
+                    lang === 'zh' ? '你还没有发布商品' : "You haven't listed any items yet",
+                    t('listFirstItem'),
+                    () => navigate('/sell')
+                  )
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {myItems.map((item) => (
                       <div
                         key={item.id}
-                        className="relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="group relative overflow-hidden rounded-[1.8rem] border transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_26px_60px_rgba(14,72,63,0.14)]"
+                        style={glassSoftStyle}
                         onClick={() => navigate(`/product/${item.id}`)}
                       >
                         <button
@@ -360,24 +474,20 @@ const ProfilePage: React.FC = () => {
                             event.stopPropagation();
                             navigate('/sell', { state: { editItemId: item.id } });
                           }}
-                          className="absolute top-2 right-2 z-10 px-2 py-1 rounded-md bg-white/95 text-gray-700 border border-gray-200 hover:bg-white text-xs font-medium"
+                          className="absolute right-3 top-3 z-10 rounded-full border border-white/60 bg-white/82 px-3 py-1 text-xs font-semibold text-[#28513b] shadow-sm transition-colors hover:bg-white"
                         >
                           {t('edit')}
                         </button>
                         <img
                           src={item.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
                           alt={item.title}
-                          className="w-full h-48 object-cover"
+                          className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         />
                         <div className="p-4">
-                          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
-                          <p className="text-orange-600 font-bold text-lg">${item.price}</p>
-                          <div className="mt-2">
-                            <span className={`inline-block px-2 py-1 text-xs rounded ${
-                              item.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                              item.status === 'SOLD' ? 'bg-gray-100 text-gray-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
+                          <h3 className="mb-2 line-clamp-2 font-semibold text-[#173b2b]">{item.title}</h3>
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-lg font-bold text-orange-600">${item.price}</p>
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(item.status)}`}>
                               {item.status}
                             </span>
                           </div>
@@ -391,45 +501,41 @@ const ProfilePage: React.FC = () => {
 
             {activeTab === 'favorites' && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('myFavorites')}</h2>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-[#173b2b]">{t('myFavorites')}</h2>
+                  <p className="mt-1 text-sm text-[#5a7864]">
+                    {lang === 'zh' ? '保留你感兴趣的商品，随时回来查看。' : 'Keep track of items you want to revisit later.'}
+                  </p>
+                </div>
+
                 {favoritesLoading ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-                    <p className="mt-2 text-gray-600">{lang === 'zh' ? '正在加载收藏...' : 'Loading favorites...'}</p>
-                  </div>
+                  renderLoadingBlock(lang === 'zh' ? '正在加载收藏...' : 'Loading favorites...')
                 ) : myFavorites.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">{lang === 'zh' ? '你还没有收藏商品' : "You haven't favorited any items yet"}</p>
-                    <button
-                      onClick={() => navigate('/products')}
-                      className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                    >
-                      {t('browseFavorites')}
-                    </button>
-                  </div>
+                  renderEmptyState(
+                    Heart,
+                    lang === 'zh' ? '你还没有收藏商品' : "You haven't favorited any items yet",
+                    t('browseFavorites'),
+                    () => navigate('/products')
+                  )
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {myFavorites.map((favorite) => (
                       <div
                         key={favorite.id}
-                        className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="group overflow-hidden rounded-[1.8rem] border transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_26px_60px_rgba(14,72,63,0.14)]"
+                        style={glassSoftStyle}
                         onClick={() => navigate(`/product/${favorite.item.id}`)}
                       >
                         <img
                           src={favorite.item.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
                           alt={favorite.item.title}
-                          className="w-full h-48 object-cover"
+                          className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         />
                         <div className="p-4">
-                          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{favorite.item.title}</h3>
-                          <p className="text-orange-600 font-bold text-lg">${favorite.item.price}</p>
-                          <div className="mt-2">
-                            <span className={`inline-block px-2 py-1 text-xs rounded ${
-                              favorite.item.status === 'AVAILABLE' ? 'bg-green-100 text-green-800' :
-                              favorite.item.status === 'SOLD' ? 'bg-gray-100 text-gray-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
+                          <h3 className="mb-2 line-clamp-2 font-semibold text-[#173b2b]">{favorite.item.title}</h3>
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-lg font-bold text-orange-600">${favorite.item.price}</p>
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(favorite.item.status)}`}>
                               {favorite.item.status}
                             </span>
                           </div>
@@ -440,7 +546,6 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
             )}
-          </div>
         </div>
       </div>
     </div>

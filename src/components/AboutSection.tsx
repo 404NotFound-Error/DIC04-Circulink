@@ -3,6 +3,21 @@ import { useLanguage } from '../context/LanguageContext';
 
 const AboutSection: React.FC = () => {
   const { lang } = useLanguage();
+  const titleBubbleStyle = {
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.34), rgba(255,255,255,0.18))',
+    borderColor: 'rgba(255,255,255,0.5)',
+    boxShadow: '0 18px 40px rgba(14,72,63,0.12), inset 0 1px 0 rgba(255,255,255,0.5)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)'
+  };
+  const contentBubbleStyle = {
+    background: 'linear-gradient(155deg, rgba(255,255,255,0.42), rgba(255,255,255,0.18))',
+    borderColor: 'rgba(255,255,255,0.58)',
+    boxShadow: '0 24px 60px rgba(14,72,63,0.1), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -18px 30px rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(18px)',
+    WebkitBackdropFilter: 'blur(18px)'
+  };
+  const contentBubbleClass = 'relative overflow-hidden rounded-[2.2rem] border p-6';
   const copy = lang === 'zh'
     ? {
         aboutTitle: '关于 Circulink',
@@ -41,50 +56,61 @@ const AboutSection: React.FC = () => {
     <section id="about" className="py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex justify-center">
-          <div className="inline-block text-orange-700 px-8 py-4 rounded-full font-extrabold text-2xl shadow-2xl border" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.32)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{copy.aboutTitle}</div>
+          <div className="inline-block rounded-full border px-8 py-4 text-2xl font-extrabold text-orange-700 shadow-2xl" style={titleBubbleStyle}>{copy.aboutTitle}</div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100 mb-8">
+        <div className={`${contentBubbleClass} mb-8`} style={contentBubbleStyle}>
+          <div className="absolute inset-x-10 top-2 h-10 rounded-full bg-white/30 blur-xl" />
+          <div className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-white/38 blur-2xl" />
+          <div className="absolute -left-8 bottom-4 h-20 w-20 rounded-full bg-[#f6fffb]/32 blur-xl" />
           <p className="text-gray-800 leading-relaxed whitespace-pre-line">
             {copy.aboutBody}
           </p>
         </div>
 
         <div className="mb-6 flex justify-center">
-          <div className="inline-block text-orange-700 px-8 py-4 rounded-full font-extrabold text-2xl shadow-2xl border" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.32)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{copy.missionTitle}</div>
+          <div className="inline-block rounded-full border px-8 py-4 text-2xl font-extrabold text-orange-700 shadow-2xl" style={titleBubbleStyle}>{copy.missionTitle}</div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+        <div className={contentBubbleClass} style={contentBubbleStyle}>
+          <div className="absolute inset-x-12 top-2 h-10 rounded-full bg-white/28 blur-xl" />
+          <div className="absolute right-6 top-5 h-24 w-24 rounded-full bg-white/32 blur-2xl" />
           <p className="text-gray-800 leading-relaxed whitespace-pre-line">
 {copy.missionBody}
           </p>
         </div>
 
         <div className="mt-8 mb-6 flex justify-center">
-          <div className="inline-block text-orange-700 px-8 py-4 rounded-full font-extrabold text-2xl shadow-2xl border" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.32)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{copy.privacyTitle}</div>
+          <div className="inline-block rounded-full border px-8 py-4 text-2xl font-extrabold text-orange-700 shadow-2xl" style={titleBubbleStyle}>{copy.privacyTitle}</div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+        <div className={contentBubbleClass} style={contentBubbleStyle}>
+          <div className="absolute inset-x-12 top-2 h-10 rounded-full bg-white/28 blur-xl" />
+          <div className="absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-[#f8fffc]/30 blur-2xl" />
           <p className="text-gray-800 leading-relaxed whitespace-pre-line">
 {copy.privacyBody}
           </p>
         </div>
 
         <div className="mt-8 mb-6 flex justify-center">
-          <div className="inline-block text-orange-700 px-8 py-4 rounded-full font-extrabold text-2xl shadow-2xl border" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.32)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{copy.faqTitle}</div>
+          <div className="inline-block rounded-full border px-8 py-4 text-2xl font-extrabold text-orange-700 shadow-2xl" style={titleBubbleStyle}>{copy.faqTitle}</div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+        <div className={contentBubbleClass} style={contentBubbleStyle}>
+          <div className="absolute inset-x-12 top-2 h-10 rounded-full bg-white/28 blur-xl" />
+          <div className="absolute left-6 top-5 h-16 w-16 rounded-full bg-white/28 blur-xl" />
           <div className="text-gray-800 leading-relaxed whitespace-pre-line">
 {copy.faqBody}
           </div>
         </div>
 
         <div className="mt-8 mb-6 flex justify-center">
-          <div className="inline-block text-orange-700 px-8 py-4 rounded-full font-extrabold text-2xl shadow-2xl border" style={{ background: 'rgba(255,255,255,0.16)', borderColor: 'rgba(255,255,255,0.32)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{copy.contactTitle}</div>
+          <div className="inline-block rounded-full border px-8 py-4 text-2xl font-extrabold text-orange-700 shadow-2xl" style={titleBubbleStyle}>{copy.contactTitle}</div>
         </div>
 
-        <div className="bg-white shadow-md rounded-lg p-6 border border-gray-100">
+        <div className={contentBubbleClass} style={contentBubbleStyle}>
+          <div className="absolute inset-x-12 top-2 h-10 rounded-full bg-white/28 blur-xl" />
+          <div className="absolute -left-6 -top-3 h-20 w-20 rounded-full bg-white/28 blur-xl" />
           <p className="text-gray-800 leading-relaxed">
             {copy.contactBody}
             <br />

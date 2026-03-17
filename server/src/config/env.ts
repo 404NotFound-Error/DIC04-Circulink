@@ -15,9 +15,14 @@ const envCandidates = [
   path.resolve(__dirname, "../../../.env")
 ];
 
-const resolvedEnvPath = envCandidates.find((candidate) => fs.existsSync(candidate));
-if (resolvedEnvPath) {
-  dotenv.config({ path: resolvedEnvPath });
+const uniqueEnvCandidates = Array.from(new Set(envCandidates));
+const resolvedEnvPaths = uniqueEnvCandidates.filter((candidate) => fs.existsSync(candidate));
+
+if (resolvedEnvPaths.length > 0) {
+  // Load from most specific to most general; keep existing values when duplicated.
+  for (const envPath of resolvedEnvPaths) {
+    dotenv.config({ path: envPath, override: false });
+  }
 } else {
   dotenv.config();
 }
@@ -38,7 +43,11 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().default("gpt-4.1-mini")
 });
 
-const parsedEnv = envSchema.parse(process.env);
+const parsedEnv = envSchema.parse({
+  ...process.env,
+  // Backward compatibility for old server/.env templates.
+  JWT_SECRET: process.env.JWT_SECRET ?? process.env.JWT_ACCESS_SECRET
+});
 export const env = {
   ...parsedEnv,
   OPENAI_API_KEY: parsedEnv.OPENAI_API_KEY?.trim(),

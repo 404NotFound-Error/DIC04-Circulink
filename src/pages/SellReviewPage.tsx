@@ -29,7 +29,7 @@ const SellReviewPage: React.FC = () => {
 
   if (!itemData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 py-12">
+      <div className="min-h-screen bg-gradient-to-b from-[#8fc594] via-[#c5e3bd] to-[#ecf8e6] py-12">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <p className="text-lg text-emerald-900 mb-4">
             {lang === 'zh' ? '未找到草稿数据，请先填写发布表单。' : 'No draft data found. Please fill the sell form first.'}
@@ -89,7 +89,7 @@ const SellReviewPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#8fc594] via-[#c5e3bd] to-[#ecf8e6] py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="mb-8">

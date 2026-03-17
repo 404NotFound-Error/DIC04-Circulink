@@ -29,6 +29,9 @@ const SellPage: React.FC = () => {
   const editItemId = locationState?.editItemId;
   const isEditMode = Boolean(editItemId);
   const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/api\/?$/, '');
+  const heroBubbleClass = 'inline-block rounded-full border border-[#8fb48d] bg-[#e8f5e2] px-8 md:px-12 py-3 md:py-4 shadow-[0_20px_50px_rgba(23,59,43,0.12)]';
+  const moduleCardClass = 'rounded-[1.85rem] border border-[#8fb48d] bg-[#d8ecd0] p-6 md:p-8 shadow-[0_24px_60px_rgba(23,59,43,0.12)]';
+  const fieldClass = 'w-full rounded-xl border border-[#8fb48d] bg-[#e5f2dd] px-4 py-3 text-sm md:text-base text-[#173b2b] placeholder:text-[#5e7c68] focus:border-[#5d9468] focus:bg-[#edf7e7] focus:outline-none';
 
   // Form state
   const [title, setTitle] = useState<string>('');
@@ -300,20 +303,20 @@ const SellPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-sky-50 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-[#76b880] via-[#a6d1a5] to-[#e2f4d8] py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-start mb-6">
           <button
             onClick={() => navigate(isEditMode ? '/profile' : '/')}
-            className="mr-6 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm md:text-base"
+            className="mr-6 rounded-lg bg-[#1f6a3d] px-4 py-2 text-sm text-white transition-colors hover:bg-[#185532] md:text-base"
           >
             {tBack(lang)}
           </button>
         </div>
 
         <div className="mb-8">
-          <div className="inline-block bg-emerald-50 border-2 border-emerald-200 rounded-full px-8 md:px-12 py-3 md:py-4 shadow-[0_8px_0_rgba(16,185,129,0.08)]">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-800">
+          <div className={heroBubbleClass}>
+            <h1 className="text-xl font-bold text-[#173b2b] md:text-2xl lg:text-3xl">
               {isEditMode ? (lang === 'zh' ? '编辑商品' : 'Edit Your Item') : (lang === 'zh' ? '发布商品' : 'Sell Your Item')}
             </h1>
           </div>
@@ -321,14 +324,14 @@ const SellPage: React.FC = () => {
 
         {/* Basic Information Section */}
         <div className="mb-6">
-          <div className="inline-block bg-emerald-100/60 rounded-full px-6 md:px-8 py-2 md:py-3 text-sm md:text-base shadow-inner text-emerald-800 font-medium">
+          <div className="text-lg font-extrabold tracking-[0.04em] text-[#173b2b] md:text-xl">
             {lang === 'zh' ? '基本信息' : 'Basic Information'}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-6 mb-12">
           <div className="md:col-span-1">
-            <div className="bg-emerald-100/60 rounded-2xl p-6 md:p-8 h-64 md:h-72 flex flex-col items-center justify-center shadow-lg border border-emerald-200">
+            <div className="flex h-64 md:h-72 flex-col items-center justify-center rounded-[1.85rem] border border-[#8fb48d] bg-gradient-to-br from-[#edf8e7] via-[#dcefd6] to-[#cfe6c8] p-6 md:p-8 shadow-[0_24px_60px_rgba(23,59,43,0.12)]">
               <input
                 ref={fileInputRef}
                 onChange={handleFileSelect}
@@ -339,7 +342,7 @@ const SellPage: React.FC = () => {
                 disabled={uploading}
               />
 
-              <button onClick={openFileDialog} className="flex items-center gap-2 text-emerald-900 text-base md:text-lg hover:opacity-80 transition-opacity" disabled={uploading}>
+              <button onClick={openFileDialog} className="flex items-center gap-2 text-base text-[#173b2b] transition-opacity hover:opacity-80 md:text-lg" disabled={uploading}>
                 <span className="text-lg md:text-xl">📷</span>
                 <span>{lang === 'zh' ? '添加图片' : 'Add your images'}</span>
               </button>
@@ -347,17 +350,17 @@ const SellPage: React.FC = () => {
               <button
                 onClick={handleAiRecognition}
                 disabled={uploading || aiRecognizing}
-                className="mt-6 bg-emerald-200/80 hover:bg-emerald-200 rounded-md px-4 py-2 text-xs md:text-sm flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="mt-6 flex items-center gap-2 rounded-full border border-[#8fb48d] bg-[#e4f2dc] px-4 py-2 text-xs text-[#173b2b] shadow-[0_12px_28px_rgba(23,59,43,0.08)] transition-colors hover:bg-[#edf7e7] disabled:cursor-not-allowed disabled:opacity-60 md:text-sm"
               >
                 <span className="text-lg">⭐</span>
                 <span>{aiRecognizing ? (lang === 'zh' ? 'AI 识别中...' : 'Analyzing...') : (lang === 'zh' ? 'AI 识别' : 'AI Recognition')}</span>
               </button>
               {(existingImagePaths.length > 0 || previewUrls.length > 0) && (
-                <p className="mt-3 text-xs text-emerald-800">
+                <p className="mt-3 text-xs text-[#28513b]">
                   {lang === 'zh' ? `已选择 ${existingImagePaths.length + previewUrls.length} 张图片` : `${existingImagePaths.length + previewUrls.length} image(s) selected`}
                 </p>
               )}
-              <p className="mt-2 text-xs text-emerald-700">
+              <p className="mt-2 text-xs text-[#4f6f5a]">
                 {lang === 'zh' ? '支持 PNG/JPG/WebP/GIF，单张不超过 10MB，最多 5 张。' : 'Supports PNG/JPG/WebP/GIF, up to 10MB per image, max 5 images.'}
               </p>
             </div>
@@ -365,10 +368,10 @@ const SellPage: React.FC = () => {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {existingImagePaths.map((image, index) => (
                   <div key={`existing-${image}-${index}`} className="relative">
-                    <img src={resolveImageUrl(image)} alt={`existing-${index}`} className="h-20 w-full object-cover rounded-lg border border-emerald-200" />
+                    <img src={resolveImageUrl(image)} alt={`existing-${index}`} className="h-20 w-full object-cover rounded-lg border border-[#8fb48d]" />
                     <button
                       onClick={() => handleRemoveExistingImage(index)}
-                      className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full px-1.5 text-xs"
+                      className="absolute top-1 right-1 rounded-full bg-[#edf7e7] px-1.5 text-xs text-red-600"
                       disabled={uploading}
                     >
                       x
@@ -377,10 +380,10 @@ const SellPage: React.FC = () => {
                 ))}
                 {previewUrls.map((image, index) => (
                   <div key={`new-${index}`} className="relative">
-                    <img src={image} alt={`new-${index}`} className="h-20 w-full object-cover rounded-lg border border-emerald-200" />
+                    <img src={image} alt={`new-${index}`} className="h-20 w-full object-cover rounded-lg border border-[#8fb48d]" />
                     <button
                       onClick={() => handleRemoveNewImage(index)}
-                      className="absolute top-1 right-1 bg-white/90 text-red-600 rounded-full px-1.5 text-xs"
+                      className="absolute top-1 right-1 rounded-full bg-[#edf7e7] px-1.5 text-xs text-red-600"
                       disabled={uploading}
                     >
                       x
@@ -397,28 +400,28 @@ const SellPage: React.FC = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={lang === 'zh' ? '商品标题...' : 'Item title...'}
-              className="w-full mb-4 bg-emerald-50 rounded-xl p-4 border-2 border-emerald-200 text-emerald-800 focus:outline-none focus:border-emerald-400"
+              className={`${fieldClass} mb-4`}
             />
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={lang === 'zh' ? '描述你的商品...' : 'Describe your goods...'}
-              className="w-full h-64 md:h-72 bg-emerald-50 rounded-2xl p-6 md:p-10 border-2 border-emerald-200 shadow-[8px_8px_0_rgba(16,185,129,0.06)] text-emerald-800 focus:outline-none focus:border-emerald-400 resize-none text-sm md:text-base"
+              className="h-64 w-full resize-none rounded-[1.7rem] border border-[#8fb48d] bg-[#e3f0db] p-6 text-sm text-[#173b2b] shadow-[0_16px_40px_rgba(23,59,43,0.08)] placeholder:text-[#5e7c68] focus:border-[#5d9468] focus:bg-[#edf7e7] focus:outline-none md:h-72 md:p-10 md:text-base"
             />
           </div>
         </div>
 
         {/* Price Section */}
         <div className="mb-6">
-          <div className="inline-block bg-emerald-100/60 rounded-full px-6 md:px-8 py-2 md:py-3 text-sm md:text-base shadow-inner text-emerald-800 font-medium">
+          <div className="text-lg font-extrabold tracking-[0.04em] text-[#173b2b] md:text-xl">
             {lang === 'zh' ? '价格' : 'Price'}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg mb-12 border border-emerald-100">
+        <div className={`${moduleCardClass} mb-12`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
             <div>
-              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
                 {lang === 'zh' ? '¥ 当前价格' : '¥ Current Price'}
               </label>
               <input
@@ -426,11 +429,11 @@ const SellPage: React.FC = () => {
                 value={currentPrice}
                 onChange={(e) => setCurrentPrice(e.target.value)}
                 placeholder={lang === 'zh' ? '输入当前价格' : 'Enter current price'}
-                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+                className={fieldClass}
               />
             </div>
             <div>
-              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
                 {lang === 'zh' ? '¥ 最低可接受价格' : '¥ Minimum Acceptable Price'}
               </label>
               <input
@@ -438,17 +441,17 @@ const SellPage: React.FC = () => {
                 value={minimumAcceptablePrice}
                 onChange={(e) => setMinimumAcceptablePrice(e.target.value)}
                 placeholder={lang === 'zh' ? '输入最低可接受价格' : 'Enter minimum acceptable price'}
-                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+                className={fieldClass}
               />
             </div>
             <div>
-              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
                 {lang === 'zh' ? '成色' : 'Condition'}
               </label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+                className={fieldClass}
               >
                 <option value="NEW">NEW</option>
                 <option value="LIKE_NEW">LIKE_NEW</option>
@@ -457,13 +460,13 @@ const SellPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm md:text-base font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
                 {lang === 'zh' ? '分类' : 'Category'}
               </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-emerald-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm md:text-base"
+                className={fieldClass}
               >
                 <option value="">{lang === 'zh' ? '选择分类' : 'Select a category'}</option>
                 {categories.map((category) => (
@@ -475,7 +478,7 @@ const SellPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-lg">
+          <div className="flex items-start gap-3 rounded-[1.1rem] border border-[#8fb48d] bg-[#e2f0da] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)]">
             <input
               type="radio"
               id="autoPriceReduce"
@@ -483,7 +486,7 @@ const SellPage: React.FC = () => {
               onChange={(e) => setAutoPriceReduce(e.target.checked)}
               className="mt-1 w-4 h-4 cursor-pointer"
             />
-            <label htmlFor="autoPriceReduce" className="text-sm md:text-base text-gray-700 cursor-pointer flex-1">
+            <label htmlFor="autoPriceReduce" className="flex-1 cursor-pointer text-sm text-[#3f624f] md:text-base">
               {lang === 'zh' ? '若 7 天内未售出，自动降价 10%，且不会低于最低可接受价格。' : 'If unsold after 7 days, automatically reduce price by 10%, without dropping below your minimum acceptable price.'}
             </label>
           </div>
@@ -491,12 +494,12 @@ const SellPage: React.FC = () => {
 
         {/* Donation Agreement Section */}
         <div className="mb-6">
-          <div className="inline-block bg-emerald-100/60 rounded-full px-6 md:px-8 py-2 md:py-3 text-sm md:text-base shadow-inner text-emerald-800 font-medium">
+          <div className="text-lg font-extrabold tracking-[0.04em] text-[#173b2b] md:text-xl">
             {lang === 'zh' ? '捐赠协议' : 'Donation Agreement'}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg mb-12 border border-emerald-100">
+        <div className={`${moduleCardClass} mb-12`}>
           <div className="flex items-start gap-3 mb-4">
             <input
               type="radio"
@@ -505,11 +508,11 @@ const SellPage: React.FC = () => {
               onChange={(e) => setAutoDonation(e.target.checked)}
               className="mt-1 w-4 h-4 cursor-pointer"
             />
-            <label htmlFor="autoDonation" className="text-sm md:text-base font-medium text-gray-800 cursor-pointer">
+            <label htmlFor="autoDonation" className="cursor-pointer text-sm font-medium text-[#28513b] md:text-base">
               {lang === 'zh' ? '30 天后自动转捐' : 'Enable automatic donation after 30 days'}
             </label>
           </div>
-          <p className="text-xs md:text-sm text-gray-600 ml-7 leading-relaxed">
+          <p className="ml-7 text-xs leading-relaxed text-[#5a7864] md:text-sm">
             {lang === 'zh'
               ? '若商品 30 天内未售出，将自动进入合作慈善店 Buy42 的捐赠流程。学期末请将捐赠物品放至校园指定回收点。'
               : 'If your item remains unsold for 30 days, it will be automatically listed for donation to our partner charity shop Buy42. At the end of the semester, please place your donated items in the designated collection area on campus.'}
@@ -529,7 +532,7 @@ const SellPage: React.FC = () => {
           <button
             onClick={handleNext}
             disabled={uploading || loadingItem || aiRecognizing}
-            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors shadow-lg text-sm md:text-base"
+            className="rounded-lg bg-[#1f6a3d] px-8 py-3 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(27,79,49,0.24)] transition-colors hover:bg-[#185532] md:text-base"
           >
             {uploading || loadingItem || aiRecognizing ? (
               <span className="inline-flex items-center gap-2">

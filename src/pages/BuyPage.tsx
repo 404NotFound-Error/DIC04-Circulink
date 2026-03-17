@@ -36,26 +36,26 @@ const BuyPage: React.FC = () => {
   const secondRow = products.slice(8, 16);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#8fc594] via-[#c5e3bd] to-[#ecf8e6] py-8">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => navigate('/')} className="text-2xl text-gray-800">←</button>
-          <h2 className="text-xl font-semibold">{lang === 'zh' ? '继续购物' : 'Continue Shopping'}</h2>
+          <button onClick={() => navigate('/')} className="text-2xl text-[#204932]">←</button>
+          <h2 className="text-xl font-semibold text-[#204932]">{lang === 'zh' ? '继续购物' : 'Continue Shopping'}</h2>
         </div>
 
-        <hr className="border-t border-gray-200 mb-6" />
+        <hr className="mb-6 border-t border-[#6fa677]/30" />
 
         {loading ? (
-          <div className="text-center py-20 text-gray-600">{lang === 'zh' ? '正在加载商品...' : 'Loading products...'}</div>
+          <div className="py-20 text-center text-[#315842]">{lang === 'zh' ? '正在加载商品...' : 'Loading products...'}</div>
         ) : error ? (
           <div className="text-center py-20 text-red-600">{error}</div>
         ) : (
           <>
-            <section className="bg-emerald-50/60 rounded-xl p-8 mb-8">
+            <section className="mb-8 rounded-[1.75rem] border border-white/40 bg-white/24 p-8 shadow-[0_24px_60px_rgba(27,79,49,0.12)] backdrop-blur-sm">
               <ProductGrid products={firstRow} onProductClick={handleProductClick} />
             </section>
             {secondRow.length > 0 && (
-              <section className="bg-emerald-50/60 rounded-xl p-8">
+              <section className="rounded-[1.75rem] border border-white/40 bg-white/24 p-8 shadow-[0_24px_60px_rgba(27,79,49,0.12)] backdrop-blur-sm">
                 <ProductGrid products={secondRow} onProductClick={handleProductClick} />
               </section>
             )}
