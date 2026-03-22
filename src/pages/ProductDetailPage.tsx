@@ -8,8 +8,9 @@ import { useLanguage } from "../context/LanguageContext";
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { lang } = useLanguage();
+  const canViewSeller = user?.role === 'ADMIN';
 
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
@@ -218,16 +219,17 @@ export default function ProductDetailPage() {
                 ${parseFloat(item.price).toFixed(2)}
               </p>
 
-              {/* Seller Info */}
-              <div className="mb-6 bg-white bg-opacity-60 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">{lang === 'zh' ? '卖家' : 'Seller'}</p>
-                <div className="flex items-center gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-800">{item.seller?.name || (lang === 'zh' ? "未知用户" : "Unknown")}</p>
-                    <p className="text-xs text-gray-600">{item.seller?.email || (lang === 'zh' ? '无邮箱' : 'No email')}</p>
+              {canViewSeller ? (
+                <div className="mb-6 bg-white bg-opacity-60 rounded-lg p-4">
+                  <p className="text-sm text-gray-600 mb-2">{lang === 'zh' ? '卖家' : 'Seller'}</p>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-semibold text-gray-800">{item.seller?.name || (lang === 'zh' ? '未知用户' : 'Unknown')}</p>
+                      <p className="text-xs text-gray-600">{item.seller?.email || (lang === 'zh' ? '无邮箱' : 'No email')}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
               {/* Description */}
               <div className="mb-6">

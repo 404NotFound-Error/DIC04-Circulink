@@ -13,6 +13,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
   const { t, lang } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const [favoritesSet, setFavoritesSet] = useState<Record<string, boolean>>({});
+  const canViewSeller = user?.role === 'ADMIN';
 
   useEffect(() => {
     const loadFavorites = async () => {
@@ -116,9 +117,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) =
               </span>
             </div>
 
-            <div className="text-xs text-gray-500">
-              {t('soldBy')} {product.seller?.name || product.seller?.email || (lang === 'zh' ? '未知卖家' : 'Unknown seller')}
-            </div>
+            {canViewSeller ? (
+              <div className="text-xs text-gray-500">
+                {t('soldBy')} {product.seller?.name || product.seller?.email || (lang === 'zh' ? '未知卖家' : 'Unknown seller')}
+              </div>
+            ) : null}
           </div>
         </div>
       ))}

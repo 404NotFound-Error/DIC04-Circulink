@@ -422,27 +422,37 @@ const SellPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
-                {lang === 'zh' ? '¥ 当前价格' : '¥ Current Price'}
+                {lang === 'zh' ? '￥ 当前价格' : '￥ Current Price'}
               </label>
-              <input
-                type="number"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(e.target.value)}
-                placeholder={lang === 'zh' ? '输入当前价格' : 'Enter current price'}
-                className={fieldClass}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#3f624f] md:text-base">
+                  ￥
+                </span>
+                <input
+                  type="number"
+                  value={currentPrice}
+                  onChange={(e) => setCurrentPrice(e.target.value)}
+                  placeholder={lang === 'zh' ? '输入当前价格' : 'Enter current price'}
+                  className={`${fieldClass} pl-10`}
+                />
+              </div>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">
-                {lang === 'zh' ? '¥ 最低可接受价格' : '¥ Minimum Acceptable Price'}
+                {lang === 'zh' ? '￥ 最低可接受价格' : '￥ Minimum Acceptable Price'}
               </label>
-              <input
-                type="number"
-                value={minimumAcceptablePrice}
-                onChange={(e) => setMinimumAcceptablePrice(e.target.value)}
-                placeholder={lang === 'zh' ? '输入最低可接受价格' : 'Enter minimum acceptable price'}
-                className={fieldClass}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#3f624f] md:text-base">
+                  ￥
+                </span>
+                <input
+                  type="number"
+                  value={minimumAcceptablePrice}
+                  onChange={(e) => setMinimumAcceptablePrice(e.target.value)}
+                  placeholder={lang === 'zh' ? '输入最低可接受价格' : 'Enter minimum acceptable price'}
+                  className={`${fieldClass} pl-10`}
+                />
+              </div>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-[#3f624f] md:text-base">

@@ -28,16 +28,24 @@ const writeProfileCache = (cache: Record<string, CachedProfile>) => {
 
 // Auth helpers for Express API
 export const signUp = async (email: string, password: string, userData: {
-  full_name: string;
-  university?: string;
+  nickname: string;
   phone?: string;
 }) => {
   try {
+    const displayName = userData.nickname.trim();
     const response = await apiClient.register({
       email,
       password,
-      name: userData.full_name
+      name: displayName
     });
+
+    if (userData.phone) {
+      await apiClient.updateProfile({
+        name: displayName,
+        phone: userData.phone
+      });
+    }
+
     return { data: response, error: null };
   } catch (error) {
     return { data: null, error: error instanceof ApiError ? error : new Error(String(error)) };
@@ -80,8 +88,7 @@ export const createAndSignInTestUser = async () => {
 
   // If sign-in failed, attempt to sign up the user
   const { data: signupData, error: signupError } = await signUp(email, password, {
-    full_name: 'Test User',
-    university: 'Test University',
+    nickname: 'Test User',
     phone: undefined
   });
 

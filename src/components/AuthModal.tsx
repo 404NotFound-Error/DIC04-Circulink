@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, MapPin, Phone } from 'lucide-react';
+import { X, Mail, Lock, User, Phone } from 'lucide-react';
 import { signIn, signUp } from '../lib/backend';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -15,8 +15,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    full_name: '',
-    university: '',
+    nickname: '',
     phone: ''
   });
   const [loading, setLoading] = useState(false);
@@ -33,8 +32,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         if (error) throw error;
       } else {
         const { error } = await signUp(formData.email, formData.password, {
-          full_name: formData.full_name,
-          university: formData.university,
+          nickname: formData.nickname,
           phone: formData.phone || undefined
         });
         if (error) throw error;
@@ -44,8 +42,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
       setFormData({
         email: '',
         password: '',
-        full_name: '',
-        university: '',
+        nickname: '',
         phone: ''
       });
     } catch (error: unknown) {
@@ -90,40 +87,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {lang === 'zh' ? '姓名' : 'Full Name'}
+                  {lang === 'zh' ? '昵称' : 'Nickname'}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
-                    name="full_name"
-                    value={formData.full_name}
+                    name="nickname"
+                    value={formData.nickname}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={lang === 'zh' ? '你的姓名' : 'Your full name'}
+                    placeholder={lang === 'zh' ? '输入你想展示的昵称' : 'Enter the nickname to display'}
                     required
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  {lang === 'zh' ? '昵称会显示在个人主页和商品信息中。' : 'Your nickname will appear on your profile and listings.'}
+                </p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {lang === 'zh' ? '学校' : 'University'}
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="university"
-                    value={formData.university}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={lang === 'zh' ? '你的学校' : 'Your university'}
-                    required
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {lang === 'zh' ? '手机号（选填）' : 'Phone (Optional)'}

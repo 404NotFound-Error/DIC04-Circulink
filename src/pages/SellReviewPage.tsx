@@ -146,7 +146,7 @@ const SellReviewPage: React.FC = () => {
                 <div>
                   <p className="text-xs md:text-sm text-gray-600">{lang === 'zh' ? '价格' : 'Price'}</p>
                   <p className="text-lg md:text-xl font-bold text-emerald-700">
-                    ${itemData.currentPrice.toFixed(2)}
+                    ￥{itemData.currentPrice.toFixed(2)}
                   </p>
                 </div>
                 <div>
@@ -163,10 +163,10 @@ const SellReviewPage: React.FC = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-1 mb-6 text-sm text-emerald-800">
-                {itemData.minimumAcceptablePrice !== undefined && <p>{lang === 'zh' ? `最低可接受价格：$${itemData.minimumAcceptablePrice.toFixed(2)}` : `Minimum acceptable price: $${itemData.minimumAcceptablePrice.toFixed(2)}`}</p>}
+                {itemData.minimumAcceptablePrice !== undefined && <p>{lang === 'zh' ? `最低可接受价格：￥${itemData.minimumAcceptablePrice.toFixed(2)}` : `Minimum acceptable price: ￥${itemData.minimumAcceptablePrice.toFixed(2)}`}</p>}
                 <p>{lang === 'zh' ? '7天后自动降价：' : 'Auto reduce after 7 days: '}{itemData.autoPriceReduce ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
                 {reducedPriceAfter7Days !== null && (
-                  <p>{lang === 'zh' ? `7天后价格（含最低价保护）：$${reducedPriceAfter7Days.toFixed(2)}` : `Price after 7 days (with floor): $${reducedPriceAfter7Days.toFixed(2)}`}</p>
+                  <p>{lang === 'zh' ? `7天后价格（含最低价保护）：￥${reducedPriceAfter7Days.toFixed(2)}` : `Price after 7 days (with floor): ￥${reducedPriceAfter7Days.toFixed(2)}`}</p>
                 )}
                 <p>{lang === 'zh' ? '30天后自动捐赠：' : 'Auto donation after 30 days: '}{itemData.autoDonation ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}</p>
               </div>
