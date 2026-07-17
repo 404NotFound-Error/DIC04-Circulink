@@ -37,7 +37,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
         });
         if (error) throw error;
       }
-      
+
       onClose();
       setFormData({
         email: '',

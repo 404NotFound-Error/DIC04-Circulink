@@ -104,6 +104,7 @@ export const registerUser = async (payload: { email: string; password: string; n
   const refreshToken = await createRefreshTokenRecord(user.id);
 
   // 注册成功后自动发送验证邮件；发信失败不应阻断注册流程，仅记录日志。
+  // 验证邮箱只是给账号打上 emailVerifiedAt 标记，不影响注册/登录本身。
   try {
     const { token } = await createEmailVerificationTokenRecord(user.id);
     await sendVerificationEmail(user.email, token);
