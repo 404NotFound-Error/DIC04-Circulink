@@ -20,6 +20,7 @@ import MessagesPage from './pages/MessagesPage';
 import AIRecommendationPage from './pages/AIRecommendationPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import NewItemModal from './components/NewItemModal';
 import FavoritesModal from './components/FavoritesModal';
 
@@ -68,6 +69,7 @@ function App() {
           <Route path="/ai-recommendation" element={<AIRecommendationPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Routes>
 
         <NewItemModal

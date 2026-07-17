@@ -110,6 +110,13 @@ class ApiClient {
     }
   }
 
+  async verifyEmail(token: string) {
+    return this.request<void>("/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
+
   async updateProfile(data: { name?: string; phone?: string; university?: string; avatarUrl?: string }) {
     return this.request<{ data: User }>("/auth/profile", {
       method: "PATCH",
